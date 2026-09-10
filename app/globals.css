@@ -4,6 +4,14 @@
   --background: #ffffff;
   --foreground: #171717;
 }
+/* Add these to your global CSS or tailwind config */
+:root {
+  --primary: #0B1D36;       /* Deep navy from the "V" */
+  --primary-light: #132B4A;
+  --secondary: #00A8E8;     /* Electric blue from the lightning bolt */
+  --secondary-hover: #0090C8;
+  --accent: #E8F7FC;
+}
 
 @theme inline {
   --color-background: var(--background);
