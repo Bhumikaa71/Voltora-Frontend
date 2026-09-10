@@ -45,11 +45,19 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [allCategoriesOpen, setAllCategoriesOpen] = useState(false);
-  const allCatRef = useRef(null);
+
+  // Fix: explicitly type the ref so `.current` is a real HTMLDivElement | null,
+  // not `never`. This is what was breaking `.contains()` below.
+  const allCatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (allCatRef.current && !allCatRef.current.contains(e.target)) {
+    // Fix: explicitly type the event as MouseEvent instead of leaving it implicit `any`.
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        allCatRef.current &&
+        e.target instanceof Node &&
+        !allCatRef.current.contains(e.target)
+      ) {
         setAllCategoriesOpen(false);
       }
     };
@@ -60,11 +68,11 @@ const Navbar = () => {
   return (
     <header className="w-full bg-white sticky top-0 z-50 shadow-sm">
       {/* ========== TOP BAR ========== */}
-      <div className="bg-[#0B1D36] text-white text-[13px]">
+      <div className="bg-gradient-to-r from-[#0B1D36] via-[#0E2544] to-[#0B1D36] text-white text-[13px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-9">
             <div className="flex items-center gap-2.5">
-              <span className="bg-[#00A8E8] text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
+              <span className="bg-gradient-to-r from-[#00A8E8] to-[#00C2F0] text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(0,168,232,0.5)]">
                 Hotline 24/7
               </span>
               <a
@@ -114,9 +122,10 @@ const Navbar = () => {
             <nav className="hidden lg:flex items-center gap-0.5">
               <Link
                 href="/"
-                className="px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider"
+                className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
               >
                 Home
+                <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </Link>
 
               {/* Products Dropdown */}
@@ -136,8 +145,8 @@ const Navbar = () => {
                 </button>
 
                 {productsOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
-                    <div className="w-[700px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="w-[700px] bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 border border-gray-100 overflow-hidden">
                       <div className="p-5">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -172,7 +181,7 @@ const Navbar = () => {
                         </div>
                       </div>
 
-                      <div className="bg-[#0B1D36] px-5 py-3 flex items-center justify-between">
+                      <div className="bg-gradient-to-r from-[#0B1D36] to-[#132B4A] px-5 py-3 flex items-center justify-between">
                         <p className="text-sm text-white/80">
                           Special deals on Gaming & Laptops
                         </p>
@@ -190,21 +199,24 @@ const Navbar = () => {
 
               <Link
                 href="/deals"
-                className="px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider"
+                className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
               >
                 Deals
+                <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </Link>
               <Link
                 href="/brands"
-                className="px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider"
+                className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
               >
                 Brands
+                <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </Link>
               <Link
                 href="/contact"
-                className="px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider"
+                className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
               >
                 Contact
+                <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </Link>
             </nav>
 
@@ -234,7 +246,7 @@ const Navbar = () => {
 
               <Link
                 href="/cart"
-                className="relative flex items-center gap-2 bg-[#0B1D36] hover:bg-[#132B4A] text-white pl-3.5 pr-4 py-2.5 rounded-full transition-all ml-1"
+                className="relative flex items-center gap-2 bg-[#0B1D36] hover:bg-[#132B4A] text-white pl-3.5 pr-4 py-2.5 rounded-full transition-all ml-1 shadow-sm hover:shadow-md"
               >
                 <div className="relative">
                   <ShoppingCart size={17} strokeWidth={2} />
@@ -257,11 +269,11 @@ const Navbar = () => {
       </div>
 
       {/* ========== SEARCH BAR ========== */}
-      <div className="bg-[#00A8E8]">
+      <div className="bg-gradient-to-r from-[#00A8E8] to-[#00bfff]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-4 py-2.5">
             <div className="w-full lg:max-w-xl relative" ref={allCatRef}>
-              <div className="flex items-center bg-white rounded-full overflow-hidden shadow-sm">
+              <div className="flex items-center bg-white rounded-full overflow-hidden shadow-md">
                 <button
                   onClick={() => setAllCategoriesOpen(!allCategoriesOpen)}
                   className="flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium text-[#0B1D36] border-r border-gray-100 whitespace-nowrap hover:bg-gray-50 transition-colors"
@@ -287,7 +299,7 @@ const Navbar = () => {
 
               {/* All Categories Dropdown */}
               {allCategoriesOpen && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <div className="py-1.5 max-h-80 overflow-y-auto">
                     {categories.map((cat) => {
                       const Icon = cat.icon;
@@ -325,7 +337,7 @@ const Navbar = () => {
 
       {/* ========== MOBILE MENU ========== */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg max-h-[75vh] overflow-y-auto">
+        <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg max-h-[75vh] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="px-4 py-3 space-y-0.5">
             <Link
               href="/"
