@@ -8,6 +8,9 @@ import BestSellers from './landingpage/bestselling/page'
 import TopCellphonesTablets from './landingpage/topcellphonestablets/page'
 import CellPhone from './landingpage/cellphone/page'
 import TopLaptop from './landingpage/toplaptop/page'
+import Laptop from './landingpage/laptop/page'
+import Accessories from './landingpage/accessories/page'
+import Footer from '@/components/footer'
 
 function page() {
   return (
@@ -21,6 +24,9 @@ function page() {
       <TopCellphonesTablets />
       <CellPhone />
       <TopLaptop />
+      <Laptop />
+      <Accessories />
+      <Footer />
       </div>
   )
 }
