@@ -6,6 +6,8 @@ import DealsOfTheDay from './landingpage/dealsofday/page'
 import Banner from './landingpage/banner/page'
 import BestSellers from './landingpage/bestselling/page'
 import TopCellphonesTablets from './landingpage/topcellphonestablets/page'
+import CellPhone from './landingpage/cellphone/page'
+import TopLaptop from './landingpage/toplaptop/page'
 
 function page() {
   return (
@@ -17,6 +19,8 @@ function page() {
       <Banner />
       <BestSellers />
       <TopCellphonesTablets />
+      <CellPhone />
+      <TopLaptop />
       </div>
   )
 }
