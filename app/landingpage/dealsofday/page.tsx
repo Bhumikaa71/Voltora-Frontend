@@ -193,6 +193,7 @@ const DealsOfTheDay = () => {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedImage(0);
   }, [activeDeal]);
 
