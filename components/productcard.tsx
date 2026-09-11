@@ -11,6 +11,7 @@ interface ProductCardProps {
   price: number;
   oldPrice?: number;
   rating: number;
+  reviews?: number;
   image: string;
   stock?: "In Stock" | "Low Stock" | "Out of Stock";
   freeShipping?: boolean;
@@ -23,6 +24,7 @@ const ProductCard = ({
   price,
   oldPrice,
   rating,
+  reviews = 0,
   image,
   stock = "In Stock",
   freeShipping = false,
@@ -31,17 +33,17 @@ const ProductCard = ({
   const [wishlisted, setWishlisted] = useState(false);
 
   return (
-    <div className="group bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300 hover:border-gray-200 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
       
-      {/* Image */}
-      <div className="relative bg-white pt-6 pb-4 px-4">
-        <Link href={`/products/${id}`}>
-          <div className="relative w-full aspect-square">
+      {/* ========== IMAGE ========== */}
+      <div className="relative bg-[#FAFAFA] pt-8 pb-6 px-6">
+        <Link href={`/products/${id}`} className="block">
+          <div className="relative mx-auto w-full max-w-[200px] aspect-square">
             <Image
               src={image}
               alt={title}
               fill
-              className="object-contain"
+              className="object-contain transition-transform duration-500 group-hover:scale-[1.04]"
               sizes="(max-width: 768px) 100vw, 25vw"
             />
           </div>
@@ -49,84 +51,104 @@ const ProductCard = ({
 
         {/* Wishlist */}
         <button
-          onClick={() => setWishlisted(!wishlisted)}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+          onClick={(e) => {
+            e.preventDefault();
+            setWishlisted(!wishlisted);
+          }}
+          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
             wishlisted
-              ? "bg-red-500 text-white"
-              : "bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-500"
+              ? "bg-red-500 text-white shadow-md"
+              : "bg-white text-gray-400 shadow-sm hover:text-red-500 hover:shadow"
           }`}
         >
           <Heart
-            size={15}
+            size={16}
+            strokeWidth={2}
             className={wishlisted ? "fill-current" : ""}
           />
         </button>
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-gray-100" />
-
-      {/* Content */}
-      <div className="p-4">
+      {/* ========== CONTENT ========== */}
+      <div className="flex flex-col flex-1 p-5">
+        
         {/* Rating */}
-        <div className="flex items-center gap-1 mb-1.5">
-          <Star size={12} className="fill-amber-400 text-amber-400" />
-          <span className="text-xs text-gray-500 font-medium">
-            {rating.toFixed(2)}
+        <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                size={12}
+                className={
+                  i < Math.round(rating)
+                    ? "fill-amber-400 text-amber-400"
+                    : "fill-gray-200 text-gray-200"
+                }
+              />
+            ))}
+          </div>
+          <span className="text-xs text-gray-400 font-medium">
+            {rating.toFixed(1)}
+            {reviews > 0 && (
+              <span className="text-gray-300"> ({reviews})</span>
+            )}
           </span>
         </div>
 
         {/* Title */}
         <Link href={`/products/${id}`}>
-          <h3 className="text-[15px] font-semibold text-gray-900 leading-snug mb-2 hover:text-[#00A8E8] transition-colors line-clamp-2">
+          <h3 className="text-[15px] font-semibold text-gray-900 leading-snug line-clamp-2 mb-3 hover:text-[#00A8E8] transition-colors">
             {title}
           </h3>
         </Link>
 
-        {/* Price */}
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-lg font-bold text-red-500">
-            ${price.toFixed(2)}
-          </span>
-          {oldPrice && (
-            <span className="text-sm text-gray-400 line-through">
-              ${oldPrice.toFixed(2)}
+        {/* Price + Stock */}
+        <div className="mt-auto">
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-xl font-bold text-gray-900">
+              ${price.toFixed(2)}
             </span>
+            {oldPrice && (
+              <span className="text-sm text-gray-400 line-through">
+                ${oldPrice.toFixed(2)}
+              </span>
+            )}
+          </div>
+
+          <p
+            className={`text-xs font-medium mb-4 ${
+              stock === "In Stock"
+                ? "text-emerald-600"
+                : stock === "Low Stock"
+                ? "text-amber-600"
+                : "text-red-500"
+            }`}
+          >
+            {stock}
+          </p>
+
+          {/* Badges */}
+          {(freeShipping || freeGift) && (
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {freeShipping && (
+                <span className="inline-flex items-center text-[10px] font-semibold tracking-wide uppercase bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full">
+                  Free Shipping
+                </span>
+              )}
+              {freeGift && (
+                <span className="inline-flex items-center text-[10px] font-semibold tracking-wide uppercase bg-rose-50 text-rose-600 px-2.5 py-1 rounded-full">
+                  Free Gift
+                </span>
+              )}
+            </div>
           )}
+
+          {/* Add to Cart */}
+          <button className="w-full h-11 flex items-center justify-center gap-2 bg-[#0B1D36] text-white text-sm font-semibold rounded-xl hover:bg-[#00A8E8] transition-colors duration-200">
+            <ShoppingCart size={16} strokeWidth={2.2} />
+            Add to Cart
+          </button>
         </div>
-
-        {/* Stock */}
-        <p
-          className={`text-sm font-medium mb-3 ${
-            stock === "In Stock"
-              ? "text-green-600"
-              : stock === "Low Stock"
-              ? "text-orange-500"
-              : "text-red-500"
-          }`}
-        >
-          {stock}
-        </p>
-
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {freeShipping && (
-            <span className="text-[11px] font-semibold bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
-              FREE SHIPPING
-            </span>
-          )}
-          {freeGift && (
-            <span className="text-[11px] font-semibold bg-pink-100 text-pink-600 px-2.5 py-1 rounded-full">
-              FREE GIFT
-            </span>
-          )}
-        </div>
-
-        {/* Add to Cart */}
-        <button className="w-full flex items-center justify-center gap-2 bg-[#0B1D36] hover:bg-[#00A8E8] text-white text-sm font-semibold py-2.5 rounded-lg transition-colors">
-          <ShoppingCart size={15} />
-          Add to Cart
-        </button>
       </div>
     </div>
   );
