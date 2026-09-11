@@ -81,10 +81,11 @@ const topCategories = [
 
 const FeatureBrand = () => {
   return (
-    <section className="relative py-10 lg:py-14 bg-[#F8FAFC] w-full overflow-hidden">
+    <section className="relative py-10 lg:py-14 bg-gradient-to-br from-[#EAF7FD] via-[#F3F7FB] to-[#EFF3FA] w-full overflow-hidden">
       {/* Decorative background glow */}
       <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 bg-[#00A8E8]/10 rounded-full blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 bg-[#0B1D36]/5 rounded-full blur-3xl" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00A8E8]/5 rounded-full blur-3xl" />
 
       <div className="relative w-full px-4 sm:px-6 lg:px-10 xl:px-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
