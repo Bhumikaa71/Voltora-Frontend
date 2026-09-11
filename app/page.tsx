@@ -4,6 +4,7 @@ import HeroSection from './landingpage/herosection/page'
 import FeatureBrand from './landingpage/featuredbrand/page'
 import DealsOfTheDay from './landingpage/dealsofday/page'
 import Banner from './landingpage/banner/page'
+import BestSellers from './landingpage/bestselling/page'
 
 function page() {
   return (
@@ -13,6 +14,7 @@ function page() {
       <FeatureBrand />
       <DealsOfTheDay />
       <Banner />
+      <BestSellers />
       </div>
   )
 }
