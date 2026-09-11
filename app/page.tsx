@@ -3,6 +3,7 @@ import React from 'react'
 import HeroSection from './landingpage/herosection/page'
 import FeatureBrand from './landingpage/featuredbrand/page'
 import DealsOfTheDay from './landingpage/dealsofday/page'
+import Banner from './landingpage/banner/page'
 
 function page() {
   return (
@@ -11,6 +12,7 @@ function page() {
       <HeroSection />
       <FeatureBrand />
       <DealsOfTheDay />
+      <Banner />
       </div>
   )
 }
