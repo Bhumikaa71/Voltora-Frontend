@@ -22,7 +22,7 @@ const bestSellers = [
   {
     id: 2,
     title: "Sony WH-1000XM5 Wireless Headphones",
-    price: 348.0,
+    price: 348.0,   
     oldPrice: 399.99,
     rating: 4.8,
     reviews: 312,
