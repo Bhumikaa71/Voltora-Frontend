@@ -5,6 +5,7 @@ import FeatureBrand from './landingpage/featuredbrand/page'
 import DealsOfTheDay from './landingpage/dealsofday/page'
 import Banner from './landingpage/banner/page'
 import BestSellers from './landingpage/bestselling/page'
+import TopCellphonesTablets from './landingpage/topcellphonestablets/page'
 
 function page() {
   return (
@@ -15,6 +16,7 @@ function page() {
       <DealsOfTheDay />
       <Banner />
       <BestSellers />
+      <TopCellphonesTablets />
       </div>
   )
 }

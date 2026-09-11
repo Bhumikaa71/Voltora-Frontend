@@ -394,7 +394,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                     value={reviewName}
                     onChange={(e) => setReviewName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 focus:border-[#00A8E8]"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 focus:border-[#00A8E8] text-slate-800"
                   />
                 </div>
 
@@ -408,7 +408,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                     onChange={(e) => setReviewText(e.target.value)}
                     placeholder="Share your experience with this product..."
                     rows={4}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 focus:border-[#00A8E8] resize-none"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 focus:border-[#00A8E8] resize-none text-slate-800"
                   />
                 </div>
 
