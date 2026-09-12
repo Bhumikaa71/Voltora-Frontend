@@ -27,18 +27,18 @@ import {
 } from "lucide-react";
 
 const categories = [
-  { name: "Laptops", href: "/products/laptops", icon: Laptop },
-  { name: "PC & Computers", href: "/products/pc-computers", icon: Monitor },
-  { name: "Cell Phones", href: "/products/cell-phones", icon: Smartphone },
-  { name: "Tablets", href: "/products/tablets", icon: Tablet },
-  { name: "Gaming & VR", href: "/products/gaming-vr", icon: Gamepad2 },
-  { name: "Networking", href: "/products/networking", icon: Wifi },
-  { name: "Cameras", href: "/products/cameras", icon: Camera },
-  { name: "Sounds", href: "/products/sounds", icon: Speaker },
-  { name: "Office", href: "/products/office", icon: Briefcase },
-  { name: "Storage & USB", href: "/products/storage-usb", icon: HardDrive },
-  { name: "Accessories", href: "/products/accessories", icon: Headphones },
-  { name: "Clearance", href: "/products/clearance", icon: Tag },
+  { name: "Laptops", href: "/products?category=laptops", icon: Laptop },
+  { name: "PC & Computers", href: "/products?category=pc-computers", icon: Monitor },
+  { name: "Cell Phones", href: "/products?category=cell-phones", icon: Smartphone },
+  { name: "Tablets", href: "/products?category=tablets", icon: Tablet },
+  { name: "Gaming & VR", href: "/products?category=gaming-vr", icon: Gamepad2 },
+  { name: "Networking", href: "/products?category=networking", icon: Wifi },
+  { name: "Cameras", href: "/products?category=cameras", icon: Camera },
+  { name: "Sounds", href: "/products?category=sounds", icon: Speaker },
+  { name: "Office", href: "/products?category=office", icon: Briefcase },
+  { name: "Storage & USB", href: "/products?category=storage-usb", icon: HardDrive },
+  { name: "Accessories", href: "/products?category=accessories", icon: Headphones },
+  { name: "Clearance", href: "/products?category=clearance", icon: Tag },
 ];
 
 const Navbar = () => {
@@ -174,7 +174,10 @@ const Navbar = () => {
                   onMouseEnter={() => setProductsOpen(true)}
                   onMouseLeave={() => setProductsOpen(false)}
                 >
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider">
+                  <Link
+                    href="/products"
+                    className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider"
+                  >
                     Products
                     <ChevronDown
                       size={14}
@@ -182,7 +185,7 @@ const Navbar = () => {
                         productsOpen ? "rotate-180" : ""
                       }`}
                     />
-                  </button>
+                  </Link>
 
                   {/* Floating Mega Menu */}
                   {productsOpen && (
@@ -245,6 +248,7 @@ const Navbar = () => {
                   Deals
                   <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
                 </Link>
+
                 <Link
                   href="/brands"
                   className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
@@ -252,6 +256,7 @@ const Navbar = () => {
                   Brands
                   <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
                 </Link>
+
                 <Link
                   href="/contact"
                   className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
@@ -408,9 +413,17 @@ const Navbar = () => {
                 Home
               </Link>
 
+              <Link
+                href="/products"
+                className="block px-4 py-3 text-sm font-semibold text-[#0B1D36] rounded-lg hover:bg-[#F0F9FF]"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                All Products
+              </Link>
+
               <div className="px-4 py-2">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                  Products
+                  Categories
                 </p>
                 <div className="grid grid-cols-2 gap-1">
                   {categories.map((cat) => (
@@ -452,7 +465,7 @@ const Navbar = () => {
         )}
       </header>
 
-      {/* Spacer to offset the fixed header's height and stop content jumping */}
+      {/* Spacer to offset the fixed header */}
       <div style={{ height: headerHeight }} aria-hidden="true" />
     </>
   );

@@ -35,7 +35,6 @@ const ProductCard = ({
 
   return (
     <div className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] hover:border-gray-200">
-      
       {/* ================= IMAGE ================= */}
       <div className="relative bg-[#F7F8FA] pt-10 pb-8 px-6">
         <Link href={`/products/${id}`} className="block">
@@ -70,7 +69,6 @@ const ProductCard = ({
 
       {/* ================= BODY ================= */}
       <div className="flex flex-col flex-1 px-5 pt-5 pb-5">
-        
         {/* Rating */}
         <div className="flex items-center gap-1.5 mb-2.5">
           <div className="flex items-center gap-[2px]">
@@ -87,10 +85,8 @@ const ProductCard = ({
             ))}
           </div>
           <span className="text-[12px] text-gray-400 font-medium">
-            {rating.toFixed(1)}
-            {reviews > 0 && (
-              <span className="text-gray-300"> ({reviews})</span>
-            )}
+            {(rating ?? 0).toFixed(1)}{" "}
+            {reviews > 0 && <span className="text-gray-300"> ({reviews})</span>}
           </span>
         </div>
 
@@ -119,8 +115,8 @@ const ProductCard = ({
             stock === "In Stock"
               ? "text-emerald-600"
               : stock === "Low Stock"
-              ? "text-amber-600"
-              : "text-red-500"
+                ? "text-amber-600"
+                : "text-red-500"
           }`}
         >
           {stock}
