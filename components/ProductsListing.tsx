@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/static-components */
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -12,11 +13,9 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
-  Search,
 } from "lucide-react";
 import ProductCard from "@/components/productcard";
 
-// ===================== DATA =====================
 const allProducts = [
   {
     id: 1,
@@ -189,7 +188,7 @@ const allProducts = [
 ];
 
 const categories = [
-  { label: "All Categories", value: "" },
+  { label: "All", value: "" },
   { label: "Laptops", value: "laptops" },
   { label: "PC & Computers", value: "pc-computers" },
   { label: "Cell Phones", value: "cell-phones" },
@@ -203,7 +202,6 @@ const brands = ["Apple", "Samsung", "Sony", "Dell", "Anker", "Logitech"];
 const ratingOptions = [4.5, 4, 3.5, 3];
 const ITEMS_PER_PAGE = 6;
 
-// ===================== COMPONENT =====================
 interface ProductsListingProps {
   initialCategory?: string;
 }
@@ -225,6 +223,7 @@ export default function ProductsListing({
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedCategory(initialCategory);
     setCurrentPage(1);
   }, [initialCategory]);
@@ -279,7 +278,6 @@ export default function ProductsListing({
     sortBy,
   ]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -287,6 +285,7 @@ export default function ProductsListing({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [selectedCategory, selectedBrand, minPrice, maxPrice, selectedRating, selectedStock, sortBy]);
 
@@ -328,42 +327,41 @@ export default function ProductsListing({
         .join(" ")
     : "All Products";
 
-  // ===================== NEW FILTER DESIGN =====================
+  // ===================== FILTER SIDEBAR =====================
   const FilterSidebar = () => (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-[15px] font-bold text-[#0B1D36] flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#0B1D36] flex items-center justify-center">
-            <SlidersHorizontal size={13} className="text-white" />
+          <div className="w-7 h-7 rounded-lg bg-[#0B1D36] text-white flex items-center justify-center">
+            <SlidersHorizontal size={13} />
           </div>
           Filters
         </h3>
         {activeFiltersCount > 0 && (
           <button
             onClick={resetFilters}
-            className="text-[11px] font-semibold text-[#E5484D] bg-red-50 px-2.5 py-1 rounded-full hover:bg-red-100 transition-colors flex items-center gap-1"
+            className="text-[11px] font-semibold text-[#E5484D] bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-full transition-colors flex items-center gap-1"
           >
             <RotateCcw size={10} />
-            Clear ({activeFiltersCount})
+            Clear
           </button>
         )}
       </div>
 
-      {/* Category - Pill style */}
+      {/* Category */}
       <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
           Category
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="space-y-0.5">
           {categories.map((cat) => (
             <button
               key={cat.value}
               onClick={() => handleCategoryChange(cat.value)}
-              className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
+              className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-all ${
                 selectedCategory === cat.value
-                  ? "bg-[#0B1D36] text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-[#0B1D36] text-white font-medium"
+                  : "text-gray-600 hover:bg-gray-50"
               }`}
             >
               {cat.label}
@@ -374,76 +372,59 @@ export default function ProductsListing({
 
       {/* Price */}
       <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-          Price Range
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
+          Price
         </p>
         <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">
-              $
-            </span>
-            <input
-              type="number"
-              placeholder="Min"
-              value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              className="w-full pl-7 pr-2 py-2.5 text-sm bg-gray-50 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/40 text-[#0B1D36] placeholder:text-gray-400"
-            />
-          </div>
-          <div className="w-3 h-[2px] bg-gray-200 rounded-full" />
-          <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">
-              $
-            </span>
-            <input
-              type="number"
-              placeholder="Max"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-full pl-7 pr-2 py-2.5 text-sm bg-gray-50 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/40 text-[#0B1D36] placeholder:text-gray-400"
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Min"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            className="w-full px-3 py-2 text-sm bg-gray-50 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 text-[#0B1D36]"
+          />
+          <span className="text-gray-300 text-sm">–</span>
+          <input
+            type="number"
+            placeholder="Max"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            className="w-full px-3 py-2 text-sm bg-gray-50 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 text-[#0B1D36]"
+          />
         </div>
       </div>
 
-      {/* Brand - Chip style */}
+      {/* Brand */}
       <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
           Brand
         </p>
-        <div className="flex flex-wrap gap-1.5">
-          {brands.map((brand) => {
-            const active = selectedBrand.includes(brand);
-            return (
-              <button
-                key={brand}
-                onClick={() => toggleBrand(brand)}
-                className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all border ${
-                  active
-                    ? "bg-[#00A8E8]/10 border-[#00A8E8] text-[#00A8E8]"
-                    : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
-              >
-                {brand}
-              </button>
-            );
-          })}
+        <div className="space-y-2">
+          {brands.map((brand) => (
+            <label key={brand} className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedBrand.includes(brand)}
+                onChange={() => toggleBrand(brand)}
+                className="w-4 h-4 rounded border-gray-300 text-[#00A8E8] focus:ring-[#00A8E8]"
+              />
+              <span className="text-[13px] text-gray-600">{brand}</span>
+            </label>
+          ))}
         </div>
       </div>
 
       {/* Rating */}
       <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
-          Minimum Rating
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
+          Rating
         </p>
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {ratingOptions.map((val) => (
             <button
               key={val}
-              onClick={() =>
-                setSelectedRating(selectedRating === val ? null : val)
-              }
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] transition-all ${
+              onClick={() => setSelectedRating(selectedRating === val ? null : val)}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] transition-all ${
                 selectedRating === val
                   ? "bg-amber-50 text-amber-700"
                   : "text-gray-600 hover:bg-gray-50"
@@ -453,7 +434,7 @@ export default function ProductsListing({
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    size={13}
+                    size={12}
                     className={
                       i < Math.floor(val)
                         ? "fill-amber-400 text-amber-400"
@@ -462,30 +443,30 @@ export default function ProductsListing({
                   />
                 ))}
               </div>
-              <span className="font-medium">{val}+</span>
+              <span>{val} & up</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Availability - Segmented control */}
+      {/* Availability */}
       <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
           Availability
         </p>
-        <div className="bg-gray-100 rounded-xl p-1 flex">
+        <div className="space-y-0.5">
           {[
-            { label: "All", value: "" },
-            { label: "In Stock", value: "in-stock" },
-            { label: "Sold Out", value: "out-of-stock" },
+            { label: "All items", value: "" },
+            { label: "In stock only", value: "in-stock" },
+            { label: "Out of stock", value: "out-of-stock" },
           ].map((opt) => (
             <button
               key={opt.value}
               onClick={() => setSelectedStock(opt.value)}
-              className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${
+              className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-all ${
                 selectedStock === opt.value
-                  ? "bg-white text-[#0B1D36] shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-[#0B1D36] text-white font-medium"
+                  : "text-gray-600 hover:bg-gray-50"
               }`}
             >
               {opt.label}
@@ -497,34 +478,32 @@ export default function ProductsListing({
   );
 
   return (
-    <div className="bg-[#F4F6F9] min-h-screen pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* Breadcrumb + Title */}
-        <div className="mb-8">
-          <nav className="flex items-center gap-2 text-[13px] text-gray-400 mb-3">
-            <Link href="/" className="hover:text-[#00A8E8] transition-colors">
-              Home
-            </Link>
+    <div className="bg-[#F4F6F9] min-h-screen pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-7">
+        {/* Header */}
+        <div className="mb-7">
+          <nav className="flex items-center gap-2 text-[13px] text-gray-400 mb-2">
+            <Link href="/" className="hover:text-[#00A8E8]">Home</Link>
             <span>/</span>
             <span className="text-[#0B1D36] font-medium">{pageTitle}</span>
           </nav>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#0B1D36]">
+              <h1 className="text-2xl sm:text-[28px] font-bold text-[#0B1D36]">
                 {pageTitle}
               </h1>
-              <p className="text-sm text-gray-400 mt-1">
-                {filteredProducts.length} products available
+              <p className="text-sm text-gray-400 mt-0.5">
+                {filteredProducts.length} products
               </p>
             </div>
             <button
               onClick={() => setMobileFiltersOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-[#0B1D36] text-white rounded-xl text-sm font-medium shadow-lg shadow-[#0B1D36]/20"
+              className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-[#0B1D36] text-white rounded-xl text-sm font-medium"
             >
               <SlidersHorizontal size={15} />
               Filters
               {activeFiltersCount > 0 && (
-                <span className="bg-[#00A8E8] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                <span className="bg-[#00A8E8] text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {activeFiltersCount}
                 </span>
               )}
@@ -533,37 +512,32 @@ export default function ProductsListing({
         </div>
 
         <div className="flex gap-6">
-          {/* ========== NEW SIDEBAR ========== */}
-          <aside className="hidden lg:block w-[260px] flex-shrink-0">
-            <div className="sticky top-28 bg-white rounded-2xl p-5 shadow-sm border border-gray-100/60">
+          {/* Sidebar */}
+          <aside className="hidden lg:block w-[240px] flex-shrink-0">
+            <div className="sticky top-28 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
               <FilterSidebar />
             </div>
           </aside>
 
-          {/* ========== MAIN ========== */}
+          {/* Main */}
           <div className="flex-1 min-w-0">
-            {/* ========== NEW TOOLBAR ========== */}
-            <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              {/* Left - Results count */}
+            {/* Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <p className="text-sm text-gray-500">
                 Showing{" "}
                 <span className="font-semibold text-[#0B1D36]">
-                  {paginatedProducts.length > 0
-                    ? (currentPage - 1) * ITEMS_PER_PAGE + 1
+                  {paginatedProducts.length
+                    ? `${(currentPage - 1) * ITEMS_PER_PAGE + 1}–${Math.min(
+                        currentPage * ITEMS_PER_PAGE,
+                        filteredProducts.length
+                      )}`
                     : 0}
-                  –
-                  {Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)}
                 </span>{" "}
-                of{" "}
-                <span className="font-semibold text-[#0B1D36]">
-                  {filteredProducts.length}
-                </span>
+                of {filteredProducts.length}
               </p>
 
-              {/* Right - Sort + View */}
-              <div className="flex items-center gap-3">
-                {/* Sort pills */}
-                <div className="flex items-center gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100/60">
+              <div className="flex items-center gap-2">
+                <div className="flex bg-white rounded-xl p-1 border border-gray-100 shadow-sm">
                   {[
                     { label: "Featured", value: "featured" },
                     { label: "Price ↑", value: "price-low" },
@@ -576,7 +550,7 @@ export default function ProductsListing({
                       className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${
                         sortBy === opt.value
                           ? "bg-[#0B1D36] text-white"
-                          : "text-gray-500 hover:text-[#0B1D36] hover:bg-gray-50"
+                          : "text-gray-500 hover:text-[#0B1D36]"
                       }`}
                     >
                       {opt.label}
@@ -584,8 +558,7 @@ export default function ProductsListing({
                   ))}
                 </div>
 
-                {/* View toggle */}
-                <div className="flex items-center bg-white rounded-xl p-1 shadow-sm border border-gray-100/60">
+                <div className="flex bg-white rounded-xl p-1 border border-gray-100 shadow-sm">
                   <button
                     onClick={() => setViewMode("grid")}
                     className={`p-2 rounded-lg transition-all ${
@@ -612,20 +585,15 @@ export default function ProductsListing({
 
             {/* Products */}
             {paginatedProducts.length === 0 ? (
-              <div className="bg-white rounded-2xl py-24 text-center border border-gray-100">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-50 flex items-center justify-center">
-                  <Search size={24} className="text-gray-300" />
-                </div>
-                <p className="text-[#0B1D36] font-bold text-lg">No products found</p>
-                <p className="text-gray-400 text-sm mt-1 mb-6">
-                  Try changing or clearing your filters
-                </p>
+              <div className="bg-white rounded-2xl py-20 text-center border border-gray-100">
+                <p className="text-[#0B1D36] font-semibold text-lg">No products found</p>
+                <p className="text-gray-400 text-sm mt-1 mb-5">Try adjusting your filters</p>
                 <button
                   onClick={resetFilters}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B1D36] text-white text-sm font-semibold rounded-xl hover:bg-[#132B4A] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B1D36] text-white text-sm font-semibold rounded-xl"
                 >
                   <RotateCcw size={14} />
-                  Clear all filters
+                  Clear filters
                 </button>
               </div>
             ) : (
@@ -650,43 +618,38 @@ export default function ProductsListing({
                       stock={product.stock}
                       freeShipping={product.freeShipping}
                       freeGift={product.freeGift}
+                      layout={viewMode}   // ← important
                     />
                   ))}
                 </div>
 
-                {/* ========== PAGINATION ========== */}
+                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="mt-10 flex items-center justify-center gap-1.5">
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white hover:text-[#0B1D36] disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-transparent hover:border-gray-200"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white disabled:opacity-30 transition-all"
                     >
                       <ChevronLeft size={18} />
                     </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
-                            currentPage === page
-                              ? "bg-[#0B1D36] text-white shadow-lg shadow-[#0B1D36]/25"
-                              : "text-gray-500 hover:bg-white hover:text-[#0B1D36] border border-transparent hover:border-gray-200"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      )
-                    )}
-
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
+                          currentPage === page
+                            ? "bg-[#0B1D36] text-white shadow-md"
+                            : "text-gray-500 hover:bg-white"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
                     <button
-                      onClick={() =>
-                        setCurrentPage((p) => Math.min(totalPages, p + 1))
-                      }
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white hover:text-[#0B1D36] disabled:opacity-30 disabled:cursor-not-allowed transition-all border border-transparent hover:border-gray-200"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white disabled:opacity-30 transition-all"
                     >
                       <ChevronRight size={18} />
                     </button>
@@ -698,30 +661,24 @@ export default function ProductsListing({
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Filters */}
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setMobileFiltersOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
           <div className="absolute right-0 top-0 bottom-0 w-full max-w-[320px] bg-white shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 py-4 border-b">
               <h3 className="font-bold text-[#0B1D36]">Filters</h3>
-              <button
-                onClick={() => setMobileFiltersOpen(false)}
-                className="p-2 -mr-2 rounded-full hover:bg-gray-50"
-              >
+              <button onClick={() => setMobileFiltersOpen(false)} className="p-2 rounded-full hover:bg-gray-50">
                 <X size={18} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-5">
               <FilterSidebar />
             </div>
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4 border-t">
               <button
                 onClick={() => setMobileFiltersOpen(false)}
-                className="w-full py-3.5 bg-[#0B1D36] text-white font-semibold rounded-xl text-sm"
+                className="w-full py-3 bg-[#0B1D36] text-white font-semibold rounded-xl text-sm"
               >
                 Show {filteredProducts.length} products
               </button>
