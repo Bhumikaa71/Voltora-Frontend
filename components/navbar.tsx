@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -25,6 +26,7 @@ import {
   Headphones,
   Tag,
 } from "lucide-react";
+import { useStore } from "@/lib/store";
 
 const categories = [
   { name: "Laptops", href: "/products?category=laptops", icon: Laptop },
@@ -42,6 +44,9 @@ const categories = [
 ];
 
 const Navbar = () => {
+  const pathname = usePathname();
+  const { cartCount, wishlistCount } = useStore();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [allCategoriesOpen, setAllCategoriesOpen] = useState(false);
@@ -51,10 +56,13 @@ const Navbar = () => {
   const allCatRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -76,15 +84,19 @@ const Navbar = () => {
   useLayoutEffect(() => {
     const node = headerRef.current;
     if (!node) return;
-
     const updateHeight = () => setHeaderHeight(node.offsetHeight);
     updateHeight();
-
     const resizeObserver = new ResizeObserver(updateHeight);
     resizeObserver.observe(node);
-
     return () => resizeObserver.disconnect();
   }, []);
+
+  const navLinkClass = (href: string) =>
+    `relative px-4 py-2 text-[13px] font-semibold uppercase tracking-wider transition-colors group ${
+      isActive(href)
+        ? "text-[#00A8E8]"
+        : "text-[#0B1D36] hover:text-[#00A8E8]"
+    }`;
 
   return (
     <>
@@ -108,7 +120,6 @@ const Navbar = () => {
                 <span className="bg-gradient-to-r from-[#00A8E8] to-[#00C2F0] text-white text-[11px] font-semibold px-2.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(0,168,232,0.5)]">
                   Hotline 24/7
                 </span>
-
                 <a
                   href="tel:+02538862516"
                   className="flex items-center gap-1.5 hover:text-[#00A8E8] transition-colors"
@@ -117,7 +128,6 @@ const Navbar = () => {
                   <span>(025) 3886 25 16</span>
                 </a>
               </div>
-
               <div className="flex items-center gap-6">
                 <Link
                   href="/sell"
@@ -160,12 +170,13 @@ const Navbar = () => {
 
               {/* Desktop Navigation */}
               <nav className="hidden lg:flex items-center gap-0.5">
-                <Link
-                  href="/"
-                  className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
-                >
+                <Link href="/" className={navLinkClass("/")}>
                   Home
-                  <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                  <span
+                    className={`absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] transition-transform origin-left ${
+                      isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                    }`}
+                  />
                 </Link>
 
                 {/* Products Dropdown */}
@@ -176,7 +187,11 @@ const Navbar = () => {
                 >
                   <Link
                     href="/products"
-                    className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider"
+                    className={`flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold uppercase tracking-wider transition-colors ${
+                      isActive("/products")
+                        ? "text-[#00A8E8]"
+                        : "text-[#0B1D36] hover:text-[#00A8E8]"
+                    }`}
                   >
                     Products
                     <ChevronDown
@@ -187,7 +202,10 @@ const Navbar = () => {
                     />
                   </Link>
 
-                  {/* Floating Mega Menu */}
+                  {isActive("/products") && (
+                    <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8]" />
+                  )}
+
                   {productsOpen && (
                     <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-[80]">
                       <div className="w-[720px] bg-white rounded-2xl shadow-2xl ring-1 ring-black/5 border border-gray-100 overflow-hidden">
@@ -203,7 +221,6 @@ const Navbar = () => {
                               View all →
                             </Link>
                           </div>
-
                           <div className="grid grid-cols-3 gap-1">
                             {categories.map((cat) => {
                               const Icon = cat.icon;
@@ -224,7 +241,6 @@ const Navbar = () => {
                             })}
                           </div>
                         </div>
-
                         <div className="bg-gradient-to-r from-[#0B1D36] to-[#132B4A] px-5 py-3 flex items-center justify-between">
                           <p className="text-sm text-white/80">
                             Special deals on Gaming & Laptops
@@ -241,47 +257,66 @@ const Navbar = () => {
                   )}
                 </div>
 
-                <Link
-                  href="/deals"
-                  className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
-                >
+                <Link href="/deals" className={navLinkClass("/deals")}>
                   Deals
-                  <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                  <span
+                    className={`absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] transition-transform origin-left ${
+                      isActive("/deals")
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
+                    }`}
+                  />
                 </Link>
 
-                <Link
-                  href="/brands"
-                  className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
-                >
+                <Link href="/brands" className={navLinkClass("/brands")}>
                   Brands
-                  <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                  <span
+                    className={`absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] transition-transform origin-left ${
+                      isActive("/brands")
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
+                    }`}
+                  />
                 </Link>
 
-                <Link
-                  href="/contact"
-                  className="relative px-4 py-2 text-[13px] font-semibold text-[#0B1D36] hover:text-[#00A8E8] transition-colors uppercase tracking-wider group"
-                >
+                <Link href="/contact" className={navLinkClass("/contact")}>
                   Contact
-                  <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                  <span
+                    className={`absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] transition-transform origin-left ${
+                      isActive("/contact")
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
+                    }`}
+                  />
                 </Link>
               </nav>
 
               {/* Right Side Icons */}
               <div className="flex items-center gap-2">
+                {/* Wishlist */}
                 <Link
                   href="/wishlist"
-                  className="relative group p-2.5 rounded-full bg-gray-50 hover:bg-[#00A8E8]/10 text-[#0B1D36] hover:text-[#00A8E8] transition-all duration-200"
+                  className={`relative group p-2.5 rounded-full transition-all duration-200 ${
+                    isActive("/wishlist")
+                      ? "bg-[#00A8E8]/15 text-[#00A8E8]"
+                      : "bg-gray-50 hover:bg-[#00A8E8]/10 text-[#0B1D36] hover:text-[#00A8E8]"
+                  }`}
                 >
                   <Heart
                     size={20}
                     strokeWidth={1.8}
-                    className="group-hover:scale-110 transition-transform"
+                    className={`group-hover:scale-110 transition-transform ${
+                      isActive("/wishlist") ? "fill-[#00A8E8]" : ""
+                    }`}
                   />
-                  <span className="absolute -top-1 -right-1 bg-[#E5484D] text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white shadow-sm">
-                    2
-                  </span>
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#E5484D] text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                      {wishlistCount > 99 ? "99+" : wishlistCount}
+                    </span>
+                  )}
                 </Link>
 
+                {/* Login */}
                 <Link
                   href="/login"
                   className="hidden sm:flex items-center gap-2.5 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all group"
@@ -297,9 +332,14 @@ const Navbar = () => {
                   </div>
                 </Link>
 
+                {/* Cart */}
                 <Link
                   href="/cart"
-                  className="relative flex items-center gap-2.5 bg-[#0B1D36] hover:bg-[#132B4A] text-white pl-3.5 pr-5 py-2.5 rounded-full transition-all duration-200 shadow-sm hover:shadow-lg group"
+                  className={`relative flex items-center gap-2.5 pl-3.5 pr-5 py-2.5 rounded-full transition-all duration-200 shadow-sm hover:shadow-lg group ${
+                    isActive("/cart")
+                      ? "bg-[#00A8E8] text-white"
+                      : "bg-[#0B1D36] hover:bg-[#132B4A] text-white"
+                  }`}
                 >
                   <div className="relative">
                     <ShoppingCart
@@ -307,9 +347,17 @@ const Navbar = () => {
                       strokeWidth={2}
                       className="group-hover:scale-110 transition-transform"
                     />
-                    <span className="absolute -top-2.5 -right-2.5 bg-[#00A8E8] text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-[#0B1D36] shadow-sm">
-                      3
-                    </span>
+                    {cartCount > 0 && (
+                      <span
+                        className={`absolute -top-2.5 -right-2.5 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 shadow-sm ${
+                          isActive("/cart")
+                            ? "bg-[#0B1D36] border-[#00A8E8]"
+                            : "bg-[#00A8E8] border-[#0B1D36]"
+                        }`}
+                      >
+                        {cartCount > 99 ? "99+" : cartCount}
+                      </span>
+                    )}
                   </div>
                   <span className="text-sm font-semibold">Cart</span>
                 </Link>
@@ -353,7 +401,6 @@ const Navbar = () => {
                       }`}
                     />
                   </button>
-
                   <input
                     type="text"
                     placeholder="Search laptops, phones, gaming gear..."
@@ -405,21 +452,38 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg max-h-[75vh] overflow-y-auto">
             <div className="px-4 py-3 space-y-0.5">
-              <Link
-                href="/"
-                className="block px-4 py-3 text-sm font-semibold text-[#0B1D36] rounded-lg hover:bg-[#F0F9FF]"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Home
-              </Link>
-
-              <Link
-                href="/products"
-                className="block px-4 py-3 text-sm font-semibold text-[#0B1D36] rounded-lg hover:bg-[#F0F9FF]"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                All Products
-              </Link>
+              {[
+                { href: "/", label: "Home" },
+                { href: "/products", label: "All Products" },
+                { href: "/deals", label: "Deals" },
+                { href: "/brands", label: "Brands" },
+                { href: "/contact", label: "Contact" },
+                { href: "/wishlist", label: "Wishlist" },
+                { href: "/cart", label: "Cart" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`block px-4 py-3 text-sm font-semibold rounded-lg ${
+                    isActive(link.href)
+                      ? "bg-[#F0F9FF] text-[#00A8E8]"
+                      : "text-[#0B1D36] hover:bg-[#F0F9FF]"
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                  {link.href === "/cart" && cartCount > 0 && (
+                    <span className="ml-2 text-xs bg-[#00A8E8] text-white px-1.5 py-0.5 rounded-full">
+                      {cartCount}
+                    </span>
+                  )}
+                  {link.href === "/wishlist" && wishlistCount > 0 && (
+                    <span className="ml-2 text-xs bg-[#E5484D] text-white px-1.5 py-0.5 rounded-full">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Link>
+              ))}
 
               <div className="px-4 py-2">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
@@ -438,34 +502,11 @@ const Navbar = () => {
                   ))}
                 </div>
               </div>
-
-              <Link
-                href="/deals"
-                className="block px-4 py-3 text-sm font-semibold text-[#0B1D36] rounded-lg hover:bg-[#F0F9FF]"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Deals
-              </Link>
-              <Link
-                href="/brands"
-                className="block px-4 py-3 text-sm font-semibold text-[#0B1D36] rounded-lg hover:bg-[#F0F9FF]"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Brands
-              </Link>
-              <Link
-                href="/contact"
-                className="block px-4 py-3 text-sm font-semibold text-[#0B1D36] rounded-lg hover:bg-[#F0F9FF]"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Contact
-              </Link>
             </div>
           </div>
         )}
       </header>
 
-      {/* Spacer to offset the fixed header */}
       <div style={{ height: headerHeight }} aria-hidden="true" />
     </>
   );
