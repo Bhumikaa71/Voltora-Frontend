@@ -1,135 +1,123 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
+import { ChevronRight, Search, ArrowUpRight } from "lucide-react";
 
 const brands = [
   {
     name: "Apple",
     initial: "A",
-    color: "text-gray-800",
-    bg: "bg-gray-100",
+    gradient: "from-gray-700 to-gray-900",
     products: 86,
-    description: "Premium smartphones, laptops & accessories",
+    description: "Premium smartphones, MacBooks & accessories",
+    tag: "Premium",
   },
   {
     name: "Samsung",
     initial: "S",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
+    gradient: "from-blue-600 to-blue-800",
     products: 124,
     description: "Galaxy phones, TVs, monitors & more",
+    tag: "Popular",
   },
   {
     name: "Sony",
     initial: "S",
-    color: "text-gray-800",
-    bg: "bg-gray-100",
+    gradient: "from-neutral-700 to-neutral-900",
     products: 67,
     description: "Audio, cameras, PlayStation & electronics",
   },
   {
     name: "Dell",
     initial: "D",
-    color: "text-blue-700",
-    bg: "bg-blue-50",
+    gradient: "from-blue-500 to-blue-700",
     products: 52,
     description: "Laptops, desktops & business solutions",
   },
   {
     name: "HP",
     initial: "H",
-    color: "text-blue-500",
-    bg: "bg-sky-50",
+    gradient: "from-sky-500 to-sky-700",
     products: 48,
     description: "PCs, printers & computing devices",
   },
   {
     name: "Asus",
     initial: "A",
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
+    gradient: "from-indigo-500 to-indigo-700",
     products: 41,
     description: "Gaming laptops, motherboards & peripherals",
+    tag: "Gaming",
   },
   {
     name: "Lenovo",
     initial: "L",
-    color: "text-red-600",
-    bg: "bg-red-50",
+    gradient: "from-red-500 to-red-700",
     products: 58,
     description: "ThinkPad, Yoga & IdeaPad series",
   },
   {
     name: "Xiaomi",
     initial: "X",
-    color: "text-orange-500",
-    bg: "bg-orange-50",
+    gradient: "from-orange-400 to-orange-600",
     products: 73,
     description: "Smartphones, wearables & smart home",
+    tag: "Value",
   },
   {
     name: "LG",
     initial: "L",
-    color: "text-red-500",
-    bg: "bg-red-50",
+    gradient: "from-rose-500 to-rose-700",
     products: 39,
     description: "TVs, monitors & home appliances",
   },
   {
     name: "CG",
     initial: "C",
-    color: "text-red-600",
-    bg: "bg-red-50",
+    gradient: "from-red-600 to-red-800",
     products: 28,
     description: "Electronics & home appliances",
   },
   {
     name: "Goldstar",
     initial: "G",
-    color: "text-yellow-600",
-    bg: "bg-yellow-50",
+    gradient: "from-amber-400 to-amber-600",
     products: 22,
     description: "TVs, refrigerators & electronics",
   },
   {
     name: "Logitech",
     initial: "L",
-    color: "text-sky-600",
-    bg: "bg-sky-50",
+    gradient: "from-cyan-500 to-cyan-700",
     products: 35,
     description: "Mice, keyboards & gaming gear",
   },
   {
     name: "Anker",
     initial: "A",
-    color: "text-cyan-600",
-    bg: "bg-cyan-50",
+    gradient: "from-teal-500 to-teal-700",
     products: 31,
     description: "Power banks, chargers & cables",
   },
   {
     name: "JBL",
     initial: "J",
-    color: "text-orange-600",
-    bg: "bg-orange-50",
+    gradient: "from-orange-500 to-orange-700",
     products: 27,
     description: "Speakers, headphones & audio systems",
   },
   {
     name: "Canon",
     initial: "C",
-    color: "text-red-600",
-    bg: "bg-red-50",
+    gradient: "from-red-500 to-red-700",
     products: 19,
     description: "Cameras, printers & imaging",
   },
   {
     name: "Microsoft",
     initial: "M",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
+    gradient: "from-blue-400 to-blue-600",
     products: 24,
     description: "Surface devices & accessories",
   },
@@ -142,96 +130,122 @@ export default function BrandsPage() {
     b.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Group by first letter
-  const grouped = filtered.reduce((acc, brand) => {
-    const letter = brand.name[0].toUpperCase();
-    if (!acc[letter]) acc[letter] = [];
-    acc[letter].push(brand);
-    return acc;
-  }, {} as Record<string, typeof brands>);
-
-  const letters = Object.keys(grouped).sort();
-
   return (
-    <div className="bg-[#F4F6F9] min-h-screen pb-16">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#0B1D36] via-[#0E2544] to-[#132B4A] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <nav className="flex items-center gap-2 text-sm text-white/50 mb-6">
+    <div className="bg-[#F4F6F9] min-h-screen pb-20">
+      {/* ========== HERO ========== */}
+      <div className="relative bg-gradient-to-br from-[#0B1D36] via-[#0E2544] to-[#132B4A] overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#00A8E8]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#00A8E8]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16 sm:pb-20">
+          <nav className="flex items-center gap-2 text-sm text-white/40 mb-10">
             <Link href="/" className="hover:text-white transition-colors">
               Home
             </Link>
             <ChevronRight size={14} />
-            <span className="text-white/80">Brands</span>
+            <span className="text-white/70">Brands</span>
           </nav>
 
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2">All Brands</h1>
-          <p className="text-white/60 text-sm sm:text-base">
-            Explore {brands.length}+ trusted brands available at Voltora
-          </p>
+          <div className="max-w-xl">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight mb-3">
+              Shop by{" "}
+              <span className="text-[#00A8E8]">Brand</span>
+            </h1>
+            <p className="text-white/50 text-base sm:text-lg">
+              Discover {brands.length}+ trusted brands with premium quality
+              products at Voltora.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
-        {/* Search */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-          <div className="relative max-w-md">
+      {/* ========== CONTENT ========== */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
+        {/* Search bar */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-4 sm:p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="relative flex-1 max-w-lg">
             <Search
               size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
               type="text"
               placeholder="Search brands..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 text-[#0B1D36] placeholder:text-gray-400"
+              className="w-full pl-11 pr-4 py-3 text-sm bg-[#F8FAFC] border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/25 focus:border-[#00A8E8] focus:bg-white transition-all text-[#0B1D36] placeholder:text-gray-400"
             />
           </div>
+          <p className="text-sm text-gray-400 shrink-0">
+            <span className="font-semibold text-[#0B1D36]">{filtered.length}</span>{" "}
+            brands found
+          </p>
         </div>
 
         {/* Brands Grid */}
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl py-20 text-center border border-gray-100">
+          <div className="bg-white rounded-2xl py-24 text-center border border-gray-100">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-50 flex items-center justify-center">
+              <Search size={24} className="text-gray-300" />
+            </div>
             <p className="text-[#0B1D36] font-semibold text-lg">No brands found</p>
-            <p className="text-gray-400 text-sm mt-1">Try a different search term</p>
+            <p className="text-gray-400 text-sm mt-1">
+              Try a different search term
+            </p>
           </div>
         ) : (
-          <div className="space-y-8">
-            {letters.map((letter) => (
-              <div key={letter}>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-8 h-8 rounded-lg bg-[#0B1D36] text-white text-sm font-bold flex items-center justify-center">
-                    {letter}
-                  </span>
-                  <div className="flex-1 h-px bg-gray-200" />
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filtered.map((brand) => (
+              <Link
+                key={brand.name}
+                href={`/products?brand=${brand.name.toLowerCase()}`}
+                className="group relative bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-gray-200/80 transition-all duration-300"
+              >
+                {/* Top gradient bar */}
+                <div
+                  className={`h-1.5 w-full bg-gradient-to-r ${brand.gradient}`}
+                />
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {grouped[letter].map((brand) => (
-                    <Link
-                      key={brand.name}
-                      href={`/products?brand=${brand.name.toLowerCase()}`}
-                      className="group bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-gray-200 transition-all duration-300 flex flex-col items-center text-center"
+                <div className="p-6">
+                  {/* Logo + Tag */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div
+                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${brand.gradient} text-white flex items-center justify-center text-xl font-bold shadow-md group-hover:scale-105 transition-transform duration-300`}
                     >
-                      <div
-                        className={`w-14 h-14 rounded-2xl ${brand.bg} flex items-center justify-center font-bold text-xl ${brand.color} group-hover:scale-110 transition-transform duration-300 mb-3`}
-                      >
-                        {brand.initial}
-                      </div>
-                      <h3 className="text-[14px] font-semibold text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
-                        {brand.name}
-                      </h3>
-                      <p className="text-[11px] text-gray-400 mt-0.5">
-                        {brand.products} products
-                      </p>
-                      <p className="text-[11px] text-gray-400 mt-2 line-clamp-2 leading-relaxed">
-                        {brand.description}
-                      </p>
-                    </Link>
-                  ))}
+                      {brand.initial}
+                    </div>
+
+                    {brand.tag && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-[#F0F9FF] text-[#00A8E8] px-2.5 py-1 rounded-full">
+                        {brand.tag}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <h3 className="text-[16px] font-bold text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors mb-1">
+                    {brand.name}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-[12px] text-gray-400 leading-relaxed mb-4 line-clamp-2">
+                    {brand.description}
+                  </p>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                    <span className="text-[12px] font-medium text-gray-500">
+                      {brand.products} products
+                    </span>
+                    <span className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-[#00A8E8] flex items-center justify-center transition-colors">
+                      <ArrowUpRight
+                        size={14}
+                        className="text-gray-400 group-hover:text-white transition-colors"
+                      />
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
