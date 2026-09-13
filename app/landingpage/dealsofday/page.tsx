@@ -3,7 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, Truck, Gift, Star, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  Clock,
+  Truck,
+  Gift,
+  Star,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
 
 const deals = [
   {
@@ -105,7 +112,11 @@ function RatingStars({ rating }: { rating: number }) {
           <Star
             key={i}
             size={13}
-            className={filled ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}
+            className={
+              filled
+                ? "fill-amber-400 text-amber-400"
+                : "fill-gray-200 text-gray-200"
+            }
           />
         );
       })}
@@ -211,10 +222,22 @@ const DealsOfTheDay = () => {
               Deals of the Day
             </h2>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
-            <Clock size={15} className="text-[#E5484D]" />
-            Refreshes in {String(timeLeft.hours).padStart(2, "0")}h{" "}
-            {String(timeLeft.minutes).padStart(2, "0")}m
+
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+              <Clock size={15} className="text-[#E5484D]" />
+              Refreshes in {String(timeLeft.hours).padStart(2, "0")}h{" "}
+              {String(timeLeft.minutes).padStart(2, "0")}m
+            </div>
+
+            {/* View All Deals Link */}
+            <Link
+              href="/deals"
+              className="text-sm font-semibold text-[#00A8E8] hover:underline flex items-center gap-1"
+            >
+              View all deals
+              <ArrowRight size={14} />
+            </Link>
           </div>
         </div>
 
@@ -250,12 +273,7 @@ const DealsOfTheDay = () => {
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <Image
-                        src={img}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
+                      <Image src={img} alt="" fill className="object-cover" />
                     </button>
                   ))}
                 </div>
@@ -293,7 +311,10 @@ const DealsOfTheDay = () => {
                   <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-2.5 text-sm text-gray-600">
                     {activeDeal.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 size={15} className="text-[#00A8E8] mt-0.5 shrink-0" />
+                        <CheckCircle2
+                          size={15}
+                          className="text-[#00A8E8] mt-0.5 shrink-0"
+                        />
                         <span>{f}</span>
                       </li>
                     ))}
@@ -387,7 +408,9 @@ const DealsOfTheDay = () => {
                     <p className="text-white text-xs font-semibold leading-tight line-clamp-2 mb-1">
                       {deal.title}
                     </p>
-                    <p className="text-white/90 text-xs font-bold">{deal.price}</p>
+                    <p className="text-white/90 text-xs font-bold">
+                      {deal.price}
+                    </p>
                   </div>
                 </button>
               );
