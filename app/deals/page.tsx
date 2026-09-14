@@ -15,6 +15,7 @@ import {
   Heart,
   ShoppingCart,
 } from "lucide-react";
+import { useStore } from "@/lib/store";
 
 const allDeals = [
   {
@@ -231,13 +232,12 @@ function CountdownTimer() {
 
 export default function DealsPage() {
   const [sortBy, setSortBy] = useState("discount");
-  const [wishlist, setWishlist] = useState<number[]>([]);
-
-  const toggleWishlist = (id: number) => {
-    setWishlist((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
+  const {
+    addToCart,
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist,
+  } = useStore();
 
   const sortedDeals = [...allDeals].sort((a, b) => {
     if (sortBy === "discount") {
@@ -251,10 +251,38 @@ export default function DealsPage() {
     return 0;
   });
 
+  const handleAddToCart = (deal: (typeof allDeals)[0]) => {
+    addToCart({
+      id: deal.id,
+      title: deal.title,
+      price: deal.price,
+      oldPrice: deal.oldPrice,
+      image: deal.image,
+      stock: "In Stock",
+    });
+  };
+
+  const handleWishlist = (deal: (typeof allDeals)[0]) => {
+    if (isInWishlist(deal.id)) {
+      removeFromWishlist(deal.id);
+    } else {
+      addToWishlist({
+        id: deal.id,
+        title: deal.title,
+        price: deal.price,
+        oldPrice: deal.oldPrice,
+        rating: deal.rating,
+        reviews: deal.reviews,
+        image: deal.image,
+        stock: "In Stock",
+      });
+    }
+  };
+
   return (
     <div className="bg-[#F4F6F9] min-h-screen pb-16">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#0B1D36] via-[#0E2544] to-[#132B4A] text-white">
+      <div className="bg-linear-to-r from-[#0B1D36] via-[#0E2544] to-[#132B4A] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <nav className="flex items-center gap-2 text-sm text-white/50 mb-6">
             <Link href="/" className="hover:text-white transition-colors">
@@ -318,7 +346,7 @@ export default function DealsPage() {
             const saveAmount = deal.oldPrice - deal.price;
             const progress = Math.round((deal.sold / deal.total) * 100);
             const remaining = deal.total - deal.sold;
-            const isWishlisted = wishlist.includes(deal.id);
+            const wishlisted = isInWishlist(deal.id);
 
             return (
               <div
@@ -326,8 +354,11 @@ export default function DealsPage() {
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col sm:flex-row"
               >
                 {/* Image */}
-                <div className="relative w-full sm:w-48 h-48 sm:h-auto flex-shrink-0 bg-[#F7F8FA]">
-                  <Link href={`/products/${deal.id}`} className="block relative w-full h-full min-h-[180px]">
+                <div className="relative w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-[#F7F8FA]">
+                  <Link
+                    href={`/products/${deal.id}`}
+                    className="block relative w-full h-full min-h-45"
+                  >
                     <Image
                       src={deal.image}
                       alt={deal.title}
@@ -340,18 +371,17 @@ export default function DealsPage() {
                     -{discountPct}%
                   </span>
 
-                  {/* Wishlist button on image */}
                   <button
-                    onClick={() => toggleWishlist(deal.id)}
+                    onClick={() => handleWishlist(deal)}
                     className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 ${
-                      isWishlisted
+                      wishlisted
                         ? "bg-[#E5484D] text-white shadow-md"
                         : "bg-white/90 text-gray-400 hover:text-[#E5484D] shadow-sm"
                     }`}
                   >
                     <Heart
                       size={16}
-                      className={isWishlisted ? "fill-current" : ""}
+                      className={wishlisted ? "fill-current" : ""}
                     />
                   </button>
                 </div>
@@ -373,7 +403,6 @@ export default function DealsPage() {
                     </h3>
                   </Link>
 
-                  {/* Features */}
                   <ul className="space-y-1 mb-4 hidden sm:block">
                     {deal.features.slice(0, 2).map((f, i) => (
                       <li
@@ -389,7 +418,6 @@ export default function DealsPage() {
                     ))}
                   </ul>
 
-                  {/* Price */}
                   <div className="flex flex-wrap items-baseline gap-2 mb-3">
                     <span className="text-xl font-bold text-[#0B1D36]">
                       {formatPrice(deal.price)}
@@ -402,7 +430,6 @@ export default function DealsPage() {
                     </span>
                   </div>
 
-                  {/* Progress */}
                   <div className="mb-4">
                     <div className="flex justify-between text-[11px] text-gray-400 mb-1">
                       <span>{deal.sold} sold</span>
@@ -418,7 +445,6 @@ export default function DealsPage() {
                     </div>
                   </div>
 
-                  {/* Badges + Actions */}
                   <div className="mt-auto">
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
@@ -429,24 +455,26 @@ export default function DealsPage() {
                       </span>
                     </div>
 
-                    {/* Buttons */}
                     <div className="flex items-center gap-2">
-                      <button className="flex-1 h-10 flex items-center justify-center gap-2 bg-[#0B1D36] hover:bg-[#00A8E8] text-white text-[13px] font-semibold rounded-xl transition-colors">
+                      <button
+                        onClick={() => handleAddToCart(deal)}
+                        className="flex-1 h-10 flex items-center justify-center gap-2 bg-[#0B1D36] hover:bg-[#00A8E8] text-white text-[13px] font-semibold rounded-xl transition-colors"
+                      >
                         <ShoppingCart size={15} />
                         Add to Cart
                       </button>
 
                       <button
-                        onClick={() => toggleWishlist(deal.id)}
+                        onClick={() => handleWishlist(deal)}
                         className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-all ${
-                          isWishlisted
+                          wishlisted
                             ? "bg-[#E5484D] border-[#E5484D] text-white"
                             : "border-gray-200 text-gray-400 hover:border-[#E5484D] hover:text-[#E5484D]"
                         }`}
                       >
                         <Heart
                           size={16}
-                          className={isWishlisted ? "fill-current" : ""}
+                          className={wishlisted ? "fill-current" : ""}
                         />
                       </button>
                     </div>
