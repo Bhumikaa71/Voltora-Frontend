@@ -1,6 +1,6 @@
 
 
-import ProductsListing from "@/components/ProductsListing";
+import ProductsListing from "@/components/websitecommon/ProductsListing";
 
 interface PageProps {
   searchParams: Promise<{ category?: string }>;

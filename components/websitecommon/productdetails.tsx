@@ -15,7 +15,7 @@ import {
   Check,
   ChevronRight,
 } from "lucide-react";
-import ProductCard from "./productcard";
+import ProductCard from "./websitecommon/productcard";
 import { useStore } from "@/lib/store";
 
 interface ProductDetailsProps {

@@ -1,5 +1,5 @@
-import Navbar from "@/components/navbar";
-import Footer from "@/components/footer";
+import Navbar from "@/components/websitecommon/navbar";
+import Footer from "@/components/websitecommon/footer";
 
 export default function VoltoraLayout({
   children,

@@ -14,7 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import ProductCard from "@/components/productcard";
+import ProductCard from "@/components/websitecommon/productcard";
 
 const allProducts = [
   {

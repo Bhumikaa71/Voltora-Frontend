@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import ProductCard from "@/components/productcard";
+import ProductCard from "@/components/websitecommon/productcard";
 
 const bestSellers = [
   {
