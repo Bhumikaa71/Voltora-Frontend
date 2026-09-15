@@ -8,7 +8,6 @@ import {
   Truck,
   Gift,
   Star,
-  ArrowRight,
   CheckCircle2,
   Flame,
   ChevronRight,
