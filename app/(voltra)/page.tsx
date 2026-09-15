@@ -1,15 +1,15 @@
 // import Navbar from '@/components/navbar'
 import React from 'react'
 import HeroSection from './landingpage/herosection/page'
-import FeatureBrand from './landingpage/featuredbrand/page'
-import DealsOfTheDay from './landingpage/dealsofday/page'
+import { Laptop } from 'lucide-react'
+import Accessories from './landingpage/accessories/page'
 import Banner from './landingpage/banner/page'
 import BestSellers from './landingpage/bestselling/page'
-import TopCellphonesTablets from './landingpage/topcellphonestablets/page'
 import CellPhone from './landingpage/cellphone/page'
+import DealsOfTheDay from './landingpage/dealsofday/page'
+import FeatureBrand from './landingpage/featuredbrand/page'
+import TopCellphonesTablets from './landingpage/topcellphonestablets/page'
 import TopLaptop from './landingpage/toplaptop/page'
-import Laptop from './landingpage/laptop/page'
-import Accessories from './landingpage/accessories/page'
 
 function page() {
   return (

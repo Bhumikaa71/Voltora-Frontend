@@ -23,6 +23,19 @@ export interface WishlistItem {
   stock?: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+const DUMMY_USER = {
+  id: "1",
+  name: "Bhumika Bista",
+  email: "baumabista@gmail.com",
+  password: "bhumika123",
+};
+
 interface StoreContextType {
   cart: CartItem[];
   wishlist: WishlistItem[];
@@ -35,6 +48,11 @@ interface StoreContextType {
   isInWishlist: (id: number | string) => boolean;
   cartCount: number;
   wishlistCount: number;
+  // Auth
+  user: User | null;
+  login: (email: string, password: string) => { ok: boolean; error?: string };
+  logout: () => void;
+  isLoggedIn: boolean;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -42,15 +60,18 @@ const StoreContext = createContext<StoreContextType | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem("voltora_cart");
       const savedWishlist = localStorage.getItem("voltora_wishlist");
+      const savedUser = localStorage.getItem("voltora_user");
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (savedCart) setCart(JSON.parse(savedCart));
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+      if (savedUser) setUser(JSON.parse(savedUser));
     } catch {}
     setLoaded(true);
   }, []);
@@ -64,6 +85,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!loaded) return;
     localStorage.setItem("voltora_wishlist", JSON.stringify(wishlist));
   }, [wishlist, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    if (user) {
+      localStorage.setItem("voltora_user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("voltora_user");
+    }
+  }, [user, loaded]);
 
   const addToCart = (item: Omit<CartItem, "quantity">, qty = 1) => {
     setCart((prev) => {
@@ -104,6 +134,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const isInWishlist = (id: number | string) =>
     wishlist.some((p) => p.id === id);
 
+  // ✅ This is the missing function
+  const login = (email: string, password: string) => {
+    if (
+      email.toLowerCase().trim() === DUMMY_USER.email &&
+      password === DUMMY_USER.password
+    ) {
+      setUser({
+        id: DUMMY_USER.id,
+        name: DUMMY_USER.name,
+        email: DUMMY_USER.email,
+      });
+      return { ok: true };
+    }
+    return { ok: false, error: "Invalid email or password" };
+  };
+
+  const logout = () => setUser(null);
+
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
   const wishlistCount = wishlist.length;
 
@@ -121,6 +169,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         isInWishlist,
         cartCount,
         wishlistCount,
+        user,
+        login,
+        logout,
+        isLoggedIn: !!user,
       }}
     >
       {children}

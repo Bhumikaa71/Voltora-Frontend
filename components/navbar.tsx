@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -25,6 +25,9 @@ import {
   HardDrive,
   Headphones,
   Tag,
+  Package,
+  LogOut,
+  UserCircle,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 
@@ -45,15 +48,18 @@ const categories = [
 
 const Navbar = () => {
   const pathname = usePathname();
-  const { cartCount, wishlistCount } = useStore();
+  const router = useRouter();
+  const { cartCount, wishlistCount, user, isLoggedIn, logout } = useStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [allCategoriesOpen, setAllCategoriesOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const allCatRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
   const isActive = (href: string) => {
@@ -75,6 +81,13 @@ const Navbar = () => {
         !allCatRef.current.contains(e.target)
       ) {
         setAllCategoriesOpen(false);
+      }
+      if (
+        userMenuRef.current &&
+        e.target instanceof Node &&
+        !userMenuRef.current.contains(e.target)
+      ) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -98,6 +111,12 @@ const Navbar = () => {
         : "text-[#0B1D36] hover:text-[#00A8E8]"
     }`;
 
+  const handleLogout = () => {
+    logout();
+    setUserMenuOpen(false);
+    router.push("/");
+  };
+
   return (
     <>
       <header
@@ -108,7 +127,7 @@ const Navbar = () => {
             : "bg-white shadow-sm"
         }`}
       >
-        {/* ========== TOP BAR ========== */}
+        {/* TOP BAR */}
         <div
           className={`bg-gradient-to-r from-[#0B1D36] via-[#0E2544] to-[#0B1D36] text-white text-[13px] transition-all duration-300 overflow-hidden ${
             scrolled ? "max-h-0 opacity-0" : "max-h-10 opacity-100"
@@ -146,7 +165,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* ========== MAIN NAV ========== */}
+        {/* MAIN NAV */}
         <div className="border-b border-gray-100 relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div
@@ -154,7 +173,6 @@ const Navbar = () => {
                 scrolled ? "h-[68px]" : "h-[88px]"
               }`}
             >
-              {/* Logo */}
               <Link href="/" className="flex-shrink-0 flex items-center">
                 <Image
                   src="/images/logo1.png"
@@ -168,18 +186,18 @@ const Navbar = () => {
                 />
               </Link>
 
-              {/* Desktop Navigation */}
               <nav className="hidden lg:flex items-center gap-0.5">
                 <Link href="/" className={navLinkClass("/")}>
                   Home
                   <span
                     className={`absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8] transition-transform origin-left ${
-                      isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                      isActive("/")
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   />
                 </Link>
 
-                {/* Products Dropdown */}
                 <div
                   className="relative"
                   onMouseEnter={() => setProductsOpen(true)}
@@ -201,7 +219,6 @@ const Navbar = () => {
                       }`}
                     />
                   </Link>
-
                   {isActive("/products") && (
                     <span className="absolute left-4 right-4 -bottom-0.5 h-[2px] bg-[#00A8E8]" />
                   )}
@@ -291,7 +308,7 @@ const Navbar = () => {
                 </Link>
               </nav>
 
-              {/* Right Side Icons */}
+              {/* Right icons */}
               <div className="flex items-center gap-2">
                 {/* Wishlist */}
                 <Link
@@ -316,21 +333,94 @@ const Navbar = () => {
                   )}
                 </Link>
 
-                {/* Login */}
-                <Link
-                  href="/login"
-                  className="hidden sm:flex items-center gap-2.5 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0B1D36] to-[#132B4A] flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-shadow">
-                    <User size={18} strokeWidth={1.8} />
+                {/* User / Login */}
+                {isLoggedIn && user ? (
+                  <div className="relative hidden sm:block" ref={userMenuRef}>
+                    <button
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="flex items-center gap-2.5 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00A8E8] to-[#0B1D36] flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                        {user.name.charAt(0)}
+                      </div>
+                      <div className="text-left leading-tight">
+                        <p className="text-[11px] text-gray-400">Hello,</p>
+                        <p className="text-[13px] font-semibold text-[#0B1D36] flex items-center gap-1">
+                          {user.name.split(" ")[0]}
+                          <ChevronDown
+                            size={12}
+                            className={`transition-transform ${
+                              userMenuOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </p>
+                      </div>
+                    </button>
+
+                    {userMenuOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-[90]">
+                        <div className="px-4 py-3 border-b border-gray-50">
+                          <p className="text-sm font-semibold text-[#0B1D36]">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <div className="py-1.5">
+                          <Link
+                            href="/account"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0B1D36] hover:bg-[#F0F9FF]"
+                          >
+                            <UserCircle size={16} />
+                            My Account
+                          </Link>
+                          <Link
+                            href="/account"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0B1D36] hover:bg-[#F0F9FF]"
+                          >
+                            <Package size={16} />
+                            My Orders
+                          </Link>
+                          <Link
+                            href="/wishlist"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#0B1D36] hover:bg-[#F0F9FF]"
+                          >
+                            <Heart size={16} />
+                            Wishlist
+                          </Link>
+                        </div>
+                        <div className="border-t border-gray-50 py-1.5">
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 w-full text-left"
+                          >
+                            <LogOut size={16} />
+                            Log out
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-left leading-tight">
-                    <p className="text-[11px] text-gray-400">Welcome</p>
-                    <p className="text-[13px] font-semibold text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
-                      Log in / Register
-                    </p>
-                  </div>
-                </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="hidden sm:flex items-center gap-2.5 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0B1D36] to-[#132B4A] flex items-center justify-center text-white shadow-sm group-hover:shadow-md transition-shadow">
+                      <User size={18} strokeWidth={1.8} />
+                    </div>
+                    <div className="text-left leading-tight">
+                      <p className="text-[11px] text-gray-400">Welcome</p>
+                      <p className="text-[13px] font-semibold text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
+                        Log in / Register
+                      </p>
+                    </div>
+                  </Link>
+                )}
 
                 {/* Cart */}
                 <Link
@@ -373,7 +463,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* ========== SEARCH BAR ========== */}
+        {/* SEARCH BAR */}
         <div
           className={`bg-gradient-to-r from-[#00A8E8] to-[#00bfff] transition-all duration-300 ${
             scrolled
@@ -448,10 +538,19 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* ========== MOBILE MENU ========== */}
+        {/* MOBILE MENU */}
         {mobileMenuOpen && (
           <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg max-h-[75vh] overflow-y-auto">
             <div className="px-4 py-3 space-y-0.5">
+              {isLoggedIn && user && (
+                <div className="px-4 py-3 mb-2 bg-[#F0F9FF] rounded-xl">
+                  <p className="text-sm font-semibold text-[#0B1D36]">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-gray-400">{user.email}</p>
+                </div>
+              )}
+
               {[
                 { href: "/", label: "Home" },
                 { href: "/products", label: "All Products" },
@@ -460,6 +559,11 @@ const Navbar = () => {
                 { href: "/contact", label: "Contact" },
                 { href: "/wishlist", label: "Wishlist" },
                 { href: "/cart", label: "Cart" },
+                ...(isLoggedIn
+                  ? [
+                      { href: "/account", label: "My Account" },
+                    ]
+                  : [{ href: "/login", label: "Log in / Register" }]),
               ].map((link) => (
                 <Link
                   key={link.href}
@@ -484,6 +588,18 @@ const Navbar = () => {
                   )}
                 </Link>
               ))}
+
+              {isLoggedIn && (
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-3 text-sm font-semibold text-red-500 rounded-lg hover:bg-red-50"
+                >
+                  Log out
+                </button>
+              )}
 
               <div className="px-4 py-2">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">
