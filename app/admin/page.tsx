@@ -12,10 +12,10 @@ export default function AdminPage() {
       if (admin) {
         router.replace("/admin/dashboard");
       } else {
-        router.replace("/admin/adminlogin");
+        router.replace("/admin/login");
       }
     } catch {
-      router.replace("/admin/adminlogin");
+      router.replace("/admin/login");
     }
   }, [router]);
 
