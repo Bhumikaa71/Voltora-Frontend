@@ -82,7 +82,7 @@ export default function WishlistPage() {
               >
                 <div className="relative bg-[#F7F8FA] pt-6 pb-4 px-4">
                   <Link href={`/products/${item.id}`} className="block">
-                    <div className="relative mx-auto w-full max-w-[150px] aspect-square">
+                    <div className="relative mx-auto w-full max-w-37.5 aspect-square">
                       <Image
                         src={item.image}
                         alt={item.title}
@@ -129,7 +129,7 @@ export default function WishlistPage() {
                   )}
 
                   <Link href={`/products/${item.id}`}>
-                    <h3 className="text-[14px] font-semibold text-[#0B1D36] line-clamp-2 min-h-[40px] hover:text-[#00A8E8] transition-colors">
+                    <h3 className="text-[14px] font-semibold text-[#0B1D36] line-clamp-2 min-h-10 hover:text-[#00A8E8] transition-colors">
                       {item.title}
                     </h3>
                   </Link>
