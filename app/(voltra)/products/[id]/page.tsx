@@ -1,5 +1,5 @@
 // app/products/[id]/page.tsx
-import ProductDetails from "@/components/productdetails";
+import ProductDetails from "@/components/websitecommon/productdetails";
 import { notFound } from "next/navigation";
 
 interface PageProps {
