@@ -10,6 +10,7 @@ import {
   X,
   Package,
   Filter,
+  ImagePlus,
 } from "lucide-react";
 
 interface Product {
@@ -19,7 +20,7 @@ interface Product {
   oldPrice?: number;
   category: string;
   stock: "In Stock" | "Low Stock" | "Out of Stock";
-  image: string;
+  images: string[]; // main + sub images
   rating: number;
 }
 
@@ -31,7 +32,11 @@ const initialProducts: Product[] = [
     oldPrice: 129.99,
     category: "Accessories",
     stock: "Low Stock",
-    image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=400&q=80",
+      "https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=400&q=80",
+      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&q=80",
+    ],
     rating: 4.6,
   },
   {
@@ -41,7 +46,10 @@ const initialProducts: Product[] = [
     oldPrice: 399.99,
     category: "Sounds",
     stock: "In Stock",
-    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&q=80",
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80",
+    ],
     rating: 4.8,
   },
   {
@@ -51,7 +59,9 @@ const initialProducts: Product[] = [
     oldPrice: 1499,
     category: "Laptops",
     stock: "In Stock",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80",
+    ],
     rating: 4.9,
   },
   {
@@ -61,7 +71,10 @@ const initialProducts: Product[] = [
     oldPrice: 1299,
     category: "Cell Phones",
     stock: "In Stock",
-    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80",
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80",
+    ],
     rating: 4.9,
   },
   {
@@ -71,7 +84,9 @@ const initialProducts: Product[] = [
     oldPrice: 549,
     category: "Gaming & VR",
     stock: "Low Stock",
-    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&q=80",
+    ],
     rating: 4.9,
   },
   {
@@ -81,7 +96,9 @@ const initialProducts: Product[] = [
     oldPrice: 249,
     category: "Accessories",
     stock: "Out of Stock",
-    image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&q=80",
+    ],
     rating: 4.8,
   },
 ];
@@ -96,6 +113,8 @@ const categories = [
   "Tablets",
 ];
 
+const MAX_IMAGES = 5; // 1 main + 4 sub
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [search, setSearch] = useState("");
@@ -103,14 +122,13 @@ export default function AdminProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
 
-  // Form state
   const [form, setForm] = useState({
     title: "",
     price: "",
     oldPrice: "",
     category: "Laptops",
     stock: "In Stock" as Product["stock"],
-    image: "",
+    images: [""] as string[], // at least one slot
   });
 
   const filtered = products.filter((p) => {
@@ -127,7 +145,7 @@ export default function AdminProductsPage() {
       oldPrice: "",
       category: "Laptops",
       stock: "In Stock",
-      image: "",
+      images: [""],
     });
     setShowModal(true);
   };
@@ -140,13 +158,43 @@ export default function AdminProductsPage() {
       oldPrice: product.oldPrice ? String(product.oldPrice) : "",
       category: product.category,
       stock: product.stock,
-      image: product.image,
+      images: product.images.length ? [...product.images] : [""],
     });
     setShowModal(true);
   };
 
+  const updateImage = (index: number, value: string) => {
+    setForm((f) => {
+      const next = [...f.images];
+      next[index] = value;
+      return { ...f, images: next };
+    });
+  };
+
+  const addImageField = () => {
+    if (form.images.length >= MAX_IMAGES) return;
+    setForm((f) => ({ ...f, images: [...f.images, ""] }));
+  };
+
+  const removeImageField = (index: number) => {
+    if (form.images.length <= 1) return;
+    setForm((f) => ({
+      ...f,
+      images: f.images.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanImages = form.images
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0);
+
+    if (cleanImages.length === 0) {
+      alert("Please add at least one image URL");
+      return;
+    }
+
     const payload: Product = {
       id: editing?.id ?? Date.now(),
       title: form.title,
@@ -154,9 +202,7 @@ export default function AdminProductsPage() {
       oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : undefined,
       category: form.category,
       stock: form.stock,
-      image:
-        form.image ||
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80",
+      images: cleanImages,
       rating: editing?.rating ?? 4.5,
     };
 
@@ -253,6 +299,9 @@ export default function AdminProductsPage() {
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">
                   Stock
                 </th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                  Images
+                </th>
                 <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
@@ -261,7 +310,7 @@ export default function AdminProductsPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-16 text-center">
+                  <td colSpan={6} className="px-5 py-16 text-center">
                     <Package size={32} className="mx-auto text-gray-200 mb-2" />
                     <p className="text-gray-400 text-sm">No products found</p>
                   </td>
@@ -276,7 +325,7 @@ export default function AdminProductsPage() {
                       <div className="flex items-center gap-3">
                         <div className="relative w-12 h-12 rounded-xl bg-[#F7F8FA] overflow-hidden shrink-0">
                           <Image
-                            src={product.image}
+                            src={product.images[0]}
                             alt={product.title}
                             fill
                             className="object-contain p-1"
@@ -314,6 +363,32 @@ export default function AdminProductsPage() {
                         {product.stock}
                       </span>
                     </td>
+                    <td className="px-5 py-4 hidden lg:table-cell">
+                      <div className="flex items-center -space-x-2">
+                        {product.images.slice(0, 4).map((img, i) => (
+                          <div
+                            key={i}
+                            className="relative w-8 h-8 rounded-lg border-2 border-white bg-[#F7F8FA] overflow-hidden"
+                          >
+                            <Image
+                              src={img}
+                              alt=""
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ))}
+                        {product.images.length > 4 && (
+                          <span className="text-[10px] text-gray-400 ml-2 pl-1">
+                            +{product.images.length - 4}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {product.images.length} image
+                        {product.images.length !== 1 ? "s" : ""}
+                      </p>
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1">
                         <button
@@ -348,7 +423,7 @@ export default function AdminProductsPage() {
             onClick={() => setShowModal(false)}
           />
           <div className="relative bg-white rounded-2xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
               <h3 className="text-lg font-bold text-[#0B1D36]">
                 {editing ? "Edit Product" : "Add Product"}
               </h3>
@@ -453,19 +528,90 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
+              {/* Images — main + sub */}
               <div>
-                <label className="block text-[13px] font-medium text-[#0B1D36] mb-1.5">
-                  Image URL
-                </label>
-                <input
-                  type="url"
-                  value={form.image}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, image: e.target.value }))
-                  }
-                  placeholder="https://..."
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36]"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[13px] font-medium text-[#0B1D36]">
+                    Images
+                    <span className="text-gray-400 font-normal ml-1">
+                      (1 main + up to 4 more)
+                    </span>
+                  </label>
+                  <span className="text-[11px] text-gray-400">
+                    {form.images.length}/{MAX_IMAGES}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {form.images.map((url, index) => (
+                    <div key={index}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
+                            index === 0
+                              ? "bg-[#00A8E8]/10 text-[#00A8E8]"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {index === 0 ? "Main" : `Sub ${index}`}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="url"
+                            value={url}
+                            onChange={(e) =>
+                              updateImage(index, e.target.value)
+                            }
+                            placeholder={
+                              index === 0
+                                ? "Main image URL (required)"
+                                : "Sub image URL"
+                            }
+                            className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36]"
+                          />
+                        </div>
+                        {/* Preview thumbnail */}
+                        {url.trim() && (
+                          <div className="relative w-11 h-11 rounded-xl bg-[#F7F8FA] overflow-hidden shrink-0 border border-gray-100">
+                            <Image
+                              src={url}
+                              alt=""
+                              fill
+                              className="object-cover"
+                              unoptimized
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
+                              }}
+                            />
+                          </div>
+                        )}
+                        {form.images.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeImageField(index)}
+                            className="w-11 h-11 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shrink-0"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {form.images.length < MAX_IMAGES && (
+                  <button
+                    type="button"
+                    onClick={addImageField}
+                    className="mt-3 w-full h-10 flex items-center justify-center gap-2 border border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-[#00A8E8] hover:text-[#00A8E8] hover:bg-[#F0F9FF] transition-colors"
+                  >
+                    <ImagePlus size={16} />
+                    Add another image
+                  </button>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">
