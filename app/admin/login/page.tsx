@@ -5,12 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield } from "lucide-react";
 
-const ADMIN = {
-  email: "admin@voltora.com",
-  password: "admin123",
-  name: "Admin",
-};
-
 export default function AdminLoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -27,26 +21,44 @@ export default function AdminLoginPage() {
     } catch {}
   }, [router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      if (
-        email.toLowerCase().trim() === ADMIN.email &&
-        password === ADMIN.password
-      ) {
-        localStorage.setItem(
-          "voltora_admin",
-          JSON.stringify({ name: ADMIN.name, email: ADMIN.email })
-        );
-        router.push("/admin/dashboard");
-      } else {
-        setError("Invalid admin email or password");
+    try {
+      const res = await fetch("http://localhost:5000/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Login failed");
+        setLoading(false);
+        return;
       }
+
+      // Save token + admin info
+      localStorage.setItem(
+        "voltora_admin",
+        JSON.stringify({
+          name: data.name,
+          email: data.email,
+          token: data.token,
+        })
+      );
+
+      router.push("/admin/dashboard");
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
