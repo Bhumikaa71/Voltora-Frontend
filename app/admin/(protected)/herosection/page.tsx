@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -17,19 +16,19 @@ export default function AdminHeroSection() {
     bg: "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]",
     order: 0,
     isActive: true,
-    imageUrl: "", // for pasting link
+    imageUrl: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [imageMode, setImageMode] = useState<"upload" | "url">("upload"); // toggle
+  const [imageMode, setImageMode] = useState<"upload" | "url">("upload");
 
   const fetchSlides = async () => {
     try {
       const res = await fetch(`${API_URL}/api/hero/admin`);
       const data = await res.json();
-      setSlides(data);
+      setSlides(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     }
@@ -44,7 +43,7 @@ export default function AdminHeroSection() {
     if (file) {
       setImageFile(file);
       setPreview(URL.createObjectURL(file));
-      setForm((prev) => ({ ...prev, imageUrl: "" })); // clear url when file is chosen
+      setForm((prev) => ({ ...prev, imageUrl: "" }));
     }
   };
 
@@ -52,7 +51,26 @@ export default function AdminHeroSection() {
     const url = e.target.value;
     setForm((prev) => ({ ...prev, imageUrl: url }));
     setPreview(url);
-    setImageFile(null); // clear file when url is used
+    setImageFile(null);
+  };
+
+  const resetForm = () => {
+    setForm({
+      title: "",
+      subtitle: "",
+      description: "",
+      buttonText: "Shop Now",
+      buttonLink: "",
+      price: "",
+      bg: "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]",
+      order: 0,
+      isActive: true,
+      imageUrl: "",
+    });
+    setImageFile(null);
+    setPreview("");
+    setEditingId(null);
+    setImageMode("upload");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,11 +89,10 @@ export default function AdminHeroSection() {
       formData.append("order", String(form.order));
       formData.append("isActive", String(form.isActive));
 
-      // Priority: file upload > image URL
       if (imageFile) {
         formData.append("image", imageFile);
       } else if (form.imageUrl) {
-        formData.append("image", form.imageUrl); // send URL as string
+        formData.append("image", form.imageUrl);
       }
 
       const url = editingId
@@ -93,23 +110,7 @@ export default function AdminHeroSection() {
         throw new Error(err.message || "Something went wrong");
       }
 
-      // Reset
-      setForm({
-        title: "",
-        subtitle: "",
-        description: "",
-        buttonText: "Shop Now",
-        buttonLink: "",
-        price: "",
-        bg: "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]",
-        order: 0,
-        isActive: true,
-        imageUrl: "",
-      });
-      setImageFile(null);
-      setPreview("");
-      setEditingId(null);
-      setImageMode("upload");
+      resetForm();
       fetchSlides();
     } catch (err: any) {
       alert(err.message);
@@ -119,27 +120,26 @@ export default function AdminHeroSection() {
   };
 
   const handleEdit = (slide: any) => {
+    const isUrl = slide.image?.startsWith("http");
+
     setForm({
-      title: slide.title,
-      subtitle: slide.subtitle,
-      description: slide.description,
-      buttonText: slide.buttonText,
-      buttonLink: slide.buttonLink,
-      price: slide.price,
+      title: slide.title || "",
+      subtitle: slide.subtitle || "",
+      description: slide.description || "",
+      buttonText: slide.buttonText || "Shop Now",
+      buttonLink: slide.buttonLink || "",
+      price: slide.price || "",
       bg: slide.bg || "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]",
       order: slide.order || 0,
-      isActive: slide.isActive,
-      imageUrl: slide.image?.startsWith("http") ? slide.image : "",
+      isActive: slide.isActive ?? true,
+      imageUrl: isUrl ? slide.image : "",
     });
 
-    const imgSrc = slide.image?.startsWith("http")
-      ? slide.image
-      : `${API_URL}${slide.image}`;
-
+    const imgSrc = isUrl ? slide.image : `${API_URL}${slide.image}`;
     setPreview(imgSrc);
     setImageFile(null);
     setEditingId(slide._id);
-    setImageMode(slide.image?.startsWith("http") ? "url" : "upload");
+    setImageMode(isUrl ? "url" : "upload");
   };
 
   const handleDelete = async (id: string) => {
@@ -148,7 +148,6 @@ export default function AdminHeroSection() {
     fetchSlides();
   };
 
-  // Helper for image URL
   const getImageUrl = (image: string) => {
     if (!image) return "";
     if (image.startsWith("http")) return image;
@@ -161,7 +160,7 @@ export default function AdminHeroSection() {
         Manage Hero Section
       </h1>
 
-      {/* Form */}
+      {/* ===================== FORM ===================== */}
       <form
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-xl shadow border border-slate-200 mb-8 space-y-5"
@@ -273,17 +272,20 @@ export default function AdminHeroSection() {
           </div>
         </div>
 
-        {/* ===== IMAGE SECTION ===== */}
+        {/* ===================== IMAGE SECTION ===================== */}
         <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
           <label className="block text-sm font-medium text-slate-700 mb-3">
             Hero Image *
           </label>
 
-          {/* Toggle buttons */}
+          {/* Toggle */}
           <div className="flex gap-2 mb-4">
             <button
               type="button"
-              onClick={() => setImageMode("upload")}
+              onClick={() => {
+                setImageMode("upload");
+                setForm((prev) => ({ ...prev, imageUrl: "" }));
+              }}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                 imageMode === "upload"
                   ? "bg-[#00A8E8] text-white"
@@ -294,7 +296,10 @@ export default function AdminHeroSection() {
             </button>
             <button
               type="button"
-              onClick={() => setImageMode("url")}
+              onClick={() => {
+                setImageMode("url");
+                setImageFile(null);
+              }}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                 imageMode === "url"
                   ? "bg-[#00A8E8] text-white"
@@ -321,13 +326,13 @@ export default function AdminHeroSection() {
             <div>
               <input
                 type="url"
-                placeholder="https://images.unsplash.com/photo-xxxx or any image URL"
+                placeholder="https://images.unsplash.com/... or any image URL"
                 value={form.imageUrl}
                 onChange={handleUrlChange}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00A8E8]"
               />
               <p className="text-xs text-slate-500 mt-1">
-                Paste any direct image link (Unsplash, Cloudinary, etc.)
+                Paste any direct image link
               </p>
             </div>
           )}
@@ -336,8 +341,7 @@ export default function AdminHeroSection() {
           {preview && (
             <div className="mt-4">
               <p className="text-sm text-slate-600 mb-2">Preview:</p>
-              <div className="relative w-56 h-32 rounded-lg overflow-hidden border border-slate-200 bg-white">
-                {/* Using regular img for reliability in admin */}
+              <div className="w-56 h-32 rounded-lg overflow-hidden border border-slate-200 bg-white">
                 <img
                   src={preview}
                   alt="Preview"
@@ -377,24 +381,7 @@ export default function AdminHeroSection() {
           {editingId && (
             <button
               type="button"
-              onClick={() => {
-                setEditingId(null);
-                setForm({
-                  title: "",
-                  subtitle: "",
-                  description: "",
-                  buttonText: "Shop Now",
-                  buttonLink: "",
-                  price: "",
-                  bg: "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]",
-                  order: 0,
-                  isActive: true,
-                  imageUrl: "",
-                });
-                setPreview("");
-                setImageFile(null);
-                setImageMode("upload");
-              }}
+              onClick={resetForm}
               className="text-slate-500 hover:text-slate-700 text-sm font-medium"
             >
               Cancel
@@ -403,7 +390,7 @@ export default function AdminHeroSection() {
         </div>
       </form>
 
-      {/* Current Slides List */}
+      {/* ===================== SLIDES LIST ===================== */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-800">
           Current Slides ({slides.length})
@@ -417,7 +404,6 @@ export default function AdminHeroSection() {
               key={slide._id}
               className="bg-white p-4 rounded-xl shadow border border-slate-200 flex items-center gap-4"
             >
-              {/* Thumbnail - using regular img for reliability */}
               <div className="w-32 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-slate-100 bg-slate-100">
                 <img
                   src={getImageUrl(slide.image)}
