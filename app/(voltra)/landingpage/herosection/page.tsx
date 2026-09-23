@@ -20,60 +20,67 @@ const categories = [
   "Clearance",
 ];
 
-const slides = [
-  {
-    id: 1,
-    title: "Premium Sound",
-    subtitle: "WIRELESS HEADPHONES",
-    description: "Immersive Noise Cancellation\n40-Hour Battery • Hi-Res Audio\nCrystal Clear Calls",
-    buttonText: "Shop Now",
-    buttonLink: "/products/headphones",
-    price: "Rs. 12,499",
-    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=900&q=80",
-    bg: "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]",
-  },
-  {
-    id: 2,
-    title: "Power Unleashed",
-    subtitle: "GAMING LAPTOP",
-    description: "RTX 4060 • Intel Core i7\n16GB RAM • 1TB SSD\n165Hz Display",
-    buttonText: "Explore",
-    buttonLink: "/products/laptops",
-    price: "Rs. 1,89,999",
-    image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=900&q=80",
-    bg: "bg-gradient-to-br from-[#111827] to-[#1F2937]",
-  },
-  {
-    id: 3,
-    title: "Capture Everything",
-    subtitle: "ACTION CAMERA",
-    description: "5.3K Video • Waterproof\nHyperSmooth 5.0\nDual Screens",
-    buttonText: "Buy Now",
-    buttonLink: "/products/cameras",
-    price: "Rs. 42,999",
-    image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=900&q=80",
-    bg: "bg-gradient-to-br from-[#0F172A] to-[#1E293B]",
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const HeroSection = () => {
+  const [slides, setSlides] = useState<any[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchSlides = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/hero`);
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setSlides(data);
+      } catch (error) {
+        console.error("Failed to fetch hero slides:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSlides();
+  }, []);
+
+  useEffect(() => {
+    if (slides.length === 0) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5500);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides]);
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  const nextSlide = () =>
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const prevSlide = () =>
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+
+  // Helper to get correct image URL
+  const getImageUrl = (image: string) => {
+    if (!image) return "";
+    if (image.startsWith("http")) return image;
+    return `${API_URL}${image}`;
+  };
+
+  if (loading) {
+    return (
+      <section className="bg-[#F8FAFC] py-6 lg:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[440px] flex items-center justify-center">
+          <div className="animate-pulse text-gray-400">Loading...</div>
+        </div>
+      </section>
+    );
+  }
+
+  if (slides.length === 0) {
+    return null; // or show a fallback message
+  }
 
   return (
     <section className="bg-[#F8FAFC] py-6 lg:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
           {/* ===== LEFT CATEGORIES ===== */}
           <div className="lg:col-span-2 hidden lg:block">
             <div className="bg-white rounded-2xl p-5 h-full border border-gray-100 shadow-sm">
@@ -84,7 +91,11 @@ const HeroSection = () => {
                 {categories.map((cat) => (
                   <li key={cat}>
                     <Link
-                      href={`/products/${cat.toLowerCase().replace(/ & /g, "-").replace(/, /g, "-").replace(/ /g, "-")}`}
+                      href={`/products/${cat
+                        .toLowerCase()
+                        .replace(/ & /g, "-")
+                        .replace(/, /g, "-")
+                        .replace(/ /g, "-")}`}
                       className="block py-2 px-2 -mx-2 rounded-lg text-[13px] font-medium text-[#0B1D36] hover:bg-[#E8F7FC] hover:text-[#00A8E8] transition-all"
                     >
                       {cat}
@@ -100,16 +111,18 @@ const HeroSection = () => {
             <div className="relative h-[360px] md:h-[440px] rounded-2xl overflow-hidden shadow-md">
               {slides.map((slide, index) => (
                 <div
-                  key={slide.id}
+                  key={slide._id}
                   className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-                    index === currentSlide ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0"
+                    index === currentSlide
+                      ? "opacity-100 scale-100 z-10"
+                      : "opacity-0 scale-105 z-0"
                   }`}
                 >
-                  <div className={`absolute inset-0 ${slide.bg}`}>
+                  <div className={`absolute inset-0 ${slide.bg || "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]"}`}>
                     {/* Background Image with overlay */}
                     <div className="absolute inset-0">
                       <Image
-                        src={slide.image}
+                        src={getImageUrl(slide.image)}
                         alt={slide.title}
                         fill
                         className="object-cover opacity-60"
@@ -136,7 +149,7 @@ const HeroSection = () => {
                         href={slide.buttonLink}
                         className="inline-flex items-center gap-2 bg-[#00A8E8] hover:bg-white text-white hover:text-[#0B1D36] font-semibold text-sm px-7 py-3 rounded-full transition-all w-fit shadow-lg"
                       >
-                        {slide.buttonText}
+                        {slide.buttonText || "Shop Now"}
                         <ArrowRight size={16} />
                       </Link>
                     </div>
@@ -165,7 +178,9 @@ const HeroSection = () => {
                     key={index}
                     onClick={() => setCurrentSlide(index)}
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      index === currentSlide ? "w-8 bg-[#00A8E8]" : "w-2 bg-white/50 hover:bg-white"
+                      index === currentSlide
+                        ? "w-8 bg-[#00A8E8]"
+                        : "w-2 bg-white/50 hover:bg-white"
                     }`}
                   />
                 ))}
@@ -188,9 +203,13 @@ const HeroSection = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0B1D36]/90 via-[#0B1D36]/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5">
-                <p className="text-[#00A8E8] text-xs font-semibold mb-1">New Arrival</p>
+                <p className="text-[#00A8E8] text-xs font-semibold mb-1">
+                  New Arrival
+                </p>
                 <h3 className="text-white font-bold text-lg leading-snug mb-3">
-                  Sport Water<br />Resistance Watch
+                  Sport Water
+                  <br />
+                  Resistance Watch
                 </h3>
                 <div className="flex items-center justify-between">
                   <span className="text-white font-bold">Rs. 8,999</span>
@@ -217,7 +236,9 @@ const HeroSection = () => {
                 <h3 className="text-white font-bold text-base mb-1">
                   Logitech MX Keys
                 </h3>
-                <p className="text-gray-300 text-xs mb-3">Wireless • Multi Device</p>
+                <p className="text-gray-300 text-xs mb-3">
+                  Wireless • Multi Device
+                </p>
                 <div className="flex items-center justify-between">
                   <span className="text-[#00A8E8] font-bold">Rs. 14,500</span>
                   <ArrowRight size={16} className="text-white" />
@@ -236,12 +257,17 @@ const HeroSection = () => {
           >
             <div className="absolute inset-0 flex items-center">
               <div className="w-1/2 pl-8 z-10">
-                <p className="text-[#00A8E8] text-xs font-semibold mb-1">Limited Stock</p>
+                <p className="text-[#00A8E8] text-xs font-semibold mb-1">
+                  Limited Stock
+                </p>
                 <h3 className="text-2xl font-bold text-[#0B1D36] mb-1">
                   PlayStation 5
                 </h3>
                 <p className="text-sm text-gray-500 mb-3">
-                  from <span className="text-green-600 font-bold text-lg">Rs. 89,999</span>
+                  from{" "}
+                  <span className="text-green-600 font-bold text-lg">
+                    Rs. 89,999
+                  </span>
                 </p>
                 <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
                   Discover Now <ArrowRight size={14} />
@@ -271,12 +297,19 @@ const HeroSection = () => {
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0B1D36]/85 via-[#0B1D36]/50 to-transparent" />
             <div className="absolute inset-0 flex flex-col justify-center px-8">
-              <p className="text-[#00A8E8] text-xs font-semibold mb-1">Best Seller</p>
+              <p className="text-[#00A8E8] text-xs font-semibold mb-1">
+                Best Seller
+              </p>
               <h3 className="text-white font-bold text-2xl leading-tight mb-2">
-                GoPro Hero 12<br />Black
+                GoPro Hero 12
+                <br />
+                Black
               </h3>
               <p className="text-white/90">
-                From <span className="text-green-400 font-bold text-xl">Rs. 54,999</span>
+                From{" "}
+                <span className="text-green-400 font-bold text-xl">
+                  Rs. 54,999
+                </span>
               </p>
             </div>
           </Link>
