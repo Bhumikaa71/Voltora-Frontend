@@ -8,17 +8,32 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
       },
       {
+        protocol: "https",
+        hostname: "encrypted-tbn0.gstatic.com",
+      },
+      {
+        protocol: "https",
+        hostname: "encrypted-tbn1.gstatic.com",
+      },
+      {
+        protocol: "https",
+        hostname: "encrypted-tbn2.gstatic.com",
+      },
+      {
+        protocol: "https",
+        hostname: "encrypted-tbn3.gstatic.com",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
-        port: "5000",          // change if your backend runs on another port
+        port: "5000",
         pathname: "/uploads/**",
       },
-      // Add your production domain later, e.g.:
-      // {
-      //   protocol: "https",
-      //   hostname: "api.yourdomain.com",
-      //   pathname: "/uploads/**",
-      // },
+      // You can add more if needed later
+      {
+        protocol: "https",
+        hostname: "**", // temporary - allows all HTTPS images (use carefully)
+      },
     ],
   },
 };
