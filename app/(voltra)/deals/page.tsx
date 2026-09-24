@@ -1,156 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Clock, Flame, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/websitecommon/productcard";
 
-const allDeals = [
-  {
-    id: 1,
-    title: "Xiaomi Redmi Note 11 Pro 256GB 2023, Black Smartphone",
-    price: 42999,
-    oldPrice: 60999,
-    rating: 4.6,
-    reviews: 12,
-    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-    features: [
-      '6.67" AMOLED Display, 120Hz',
-      "108MP Triple Camera",
-      "5000mAh + 67W charging",
-      "8GB RAM + 256GB",
-    ],
-  },
-  {
-    id: 2,
-    title: "Xbox Wireless Controller – Carbon Black",
-    price: 4999,
-    oldPrice: 9999,
-    rating: 4.8,
-    reviews: 31,
-    image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    features: [
-      "Textured grip",
-      "Bluetooth wireless",
-      "Xbox & Windows compatible",
-      "Share button",
-    ],
-  },
-  {
-    id: 3,
-    title: "iPad Air 5th Gen 64GB Wi-Fi – Space Gray",
-    price: 78999,
-    oldPrice: 94999,
-    rating: 4.7,
-    reviews: 20,
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&q=80",
-    stock: "Low Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    features: [
-      "10.9-inch Liquid Retina",
-      "M1 chip",
-      "12MP front camera",
-      "Up to 10 hours battery",
-    ],
-  },
-  {
-    id: 4,
-    title: "Samsung Galaxy S23 Ultra 256GB – Phantom Black",
-    price: 134999,
-    oldPrice: 159999,
-    rating: 4.9,
-    reviews: 44,
-    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-    features: [
-      "6.8-inch AMOLED 120Hz",
-      "200MP camera",
-      "5000mAh battery",
-      "12GB RAM",
-    ],
-  },
-  {
-    id: 5,
-    title: "Sony WH-1000XM5 Wireless Noise Cancelling Headphones",
-    price: 34999,
-    oldPrice: 44999,
-    rating: 4.8,
-    reviews: 67,
-    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    features: [
-      "Industry-leading ANC",
-      "30 hours battery",
-      "Multipoint connection",
-      "Speak-to-Chat",
-    ],
-  },
-  {
-    id: 6,
-    title: "MacBook Air M2 13-inch 256GB – Midnight",
-    price: 124999,
-    oldPrice: 149999,
-    rating: 4.9,
-    reviews: 89,
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    features: [
-      "Apple M2 chip",
-      "13.6-inch Liquid Retina",
-      "18 hours battery",
-      "8GB + 256GB SSD",
-    ],
-  },
-  {
-    id: 7,
-    title: "Apple AirPods Pro 2nd Generation",
-    price: 24999,
-    oldPrice: 29999,
-    rating: 4.8,
-    reviews: 156,
-    image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-    features: [
-      "Active Noise Cancellation",
-      "Adaptive Transparency",
-      "Spatial Audio",
-      "6 hours listening",
-    ],
-  },
-  {
-    id: 8,
-    title: "PlayStation 5 Slim Console",
-    price: 64999,
-    oldPrice: 74999,
-    rating: 4.9,
-    reviews: 112,
-    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600&q=80",
-    stock: "Low Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    features: [
-      "Ultra-high speed SSD",
-      "Ray tracing",
-      "4K gaming",
-      "Tempest 3D Audio",
-    ],
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 function CountdownTimer() {
   const [timeLeft, setTimeLeft] = useState({
@@ -197,22 +52,64 @@ function CountdownTimer() {
 }
 
 export default function DealsPage() {
+  const [deals, setDeals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("discount");
 
-  const sortedDeals = [...allDeals].sort((a, b) => {
-    if (sortBy === "discount") {
-      const discA = ((a.oldPrice - a.price) / a.oldPrice) * 100;
-      const discB = ((b.oldPrice - b.price) / b.oldPrice) * 100;
-      return discB - discA;
-    }
-    if (sortBy === "price-low") return a.price - b.price;
-    if (sortBy === "price-high") return b.price - a.price;
-    if (sortBy === "rating") return b.rating - a.rating;
-    return 0;
-  });
+  useEffect(() => {
+    const fetchDeals = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_URL}/api/products/deals`);
+        if (!res.ok) throw new Error("Failed to fetch deals");
+        const data = await res.json();
+        setDeals(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+        setDeals([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDeals();
+  }, []);
+
+  const sortedDeals = useMemo(() => {
+    const list = [...deals];
+    list.sort((a, b) => {
+      if (sortBy === "discount") {
+        const discA =
+          a.oldPrice && a.oldPrice > a.price
+            ? ((a.oldPrice - a.price) / a.oldPrice) * 100
+            : 0;
+        const discB =
+          b.oldPrice && b.oldPrice > b.price
+            ? ((b.oldPrice - b.price) / b.oldPrice) * 100
+            : 0;
+        return discB - discA;
+      }
+      if (sortBy === "price-low") return a.price - b.price;
+      if (sortBy === "price-high") return b.price - a.price;
+      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
+      return 0;
+    });
+    return list;
+  }, [deals, sortBy]);
+
+  if (loading) {
+    return (
+      <div className="bg-[#F4F6F9] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-[#00A8E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-500">Loading deals...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#F4F6F9] min-h-screen pb-16">
+      {/* Header */}
       <div className="bg-gradient-to-r from-[#0B1D36] via-[#0E2544] to-[#132B4A] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <nav className="flex items-center gap-2 text-sm text-white/50 mb-6">
@@ -247,9 +144,12 @@ export default function DealsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
+        {/* Toolbar */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <p className="text-sm text-gray-500">
-            <span className="font-semibold text-[#0B1D36]">{allDeals.length}</span>{" "}
+            <span className="font-semibold text-[#0B1D36]">
+              {sortedDeals.length}
+            </span>{" "}
             active deals
           </p>
           <div className="flex items-center gap-2">
@@ -267,26 +167,37 @@ export default function DealsPage() {
           </div>
         </div>
 
-        {/* Horizontal list layout — different from products grid */}
-        <div className="space-y-4">
-          {sortedDeals.map((deal) => (
-            <ProductCard
-              key={deal.id}
-              id={deal.id}
-              title={deal.title}
-              price={deal.price}
-              oldPrice={deal.oldPrice}
-              rating={deal.rating}
-              reviews={deal.reviews}
-              image={deal.image}
-              stock={deal.stock}
-              freeShipping={deal.freeShipping}
-              freeGift={deal.freeGift}
-              features={deal.features}
-              layout="list"
-            />
-          ))}
-        </div>
+        {/* Deals List */}
+        {sortedDeals.length === 0 ? (
+          <div className="bg-white rounded-2xl py-20 text-center border border-gray-100">
+            <p className="text-[#0B1D36] font-semibold text-lg">
+              No deals available
+            </p>
+            <p className="text-gray-400 text-sm mt-1">
+              Check back later for new offers
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {sortedDeals.map((deal) => (
+              <ProductCard
+                key={deal._id}
+                id={deal._id}
+                title={deal.title}
+                price={deal.price}
+                oldPrice={deal.oldPrice}
+                rating={deal.rating || 4.5}
+                reviews={deal.reviews || 0}
+                image={deal.images?.[0] || ""}
+                stock={deal.stock || "In Stock"}
+                freeShipping={deal.freeShipping}
+                freeGift={deal.freeGift}
+                features={deal.features || []}
+                layout="list"
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
