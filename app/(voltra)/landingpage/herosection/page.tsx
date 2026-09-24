@@ -5,42 +5,41 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 
-const categories = [
-  "Laptops",
-  "PC & Computers",
-  "Cell Phones",
-  "Tablets",
-  "Gaming & VR",
-  "Networking",
-  "Cameras",
-  "Sounds",
-  "Office",
-  "Storage, USB",
-  "Accessories",
-  "Clearance",
-];
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const HeroSection = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [slides, setSlides] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Fetch slides + categories
   useEffect(() => {
-    const fetchSlides = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/hero`);
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        setSlides(data);
+        const [slidesRes, categoriesRes] = await Promise.all([
+          fetch(`${API_URL}/api/hero`),
+          fetch(`${API_URL}/api/products/categories`),
+        ]);
+
+        if (slidesRes.ok) {
+          const slidesData = await slidesRes.json();
+          setSlides(Array.isArray(slidesData) ? slidesData : []);
+        }
+
+        if (categoriesRes.ok) {
+          const categoriesData = await categoriesRes.json();
+          setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        }
       } catch (error) {
-        console.error("Failed to fetch hero slides:", error);
+        console.error("Failed to fetch hero data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSlides();
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -56,7 +55,6 @@ const HeroSection = () => {
   const prevSlide = () =>
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
-  // Helper to get correct image URL
   const getImageUrl = (image: string) => {
     if (!image) return "";
     if (image.startsWith("http")) return image;
@@ -74,34 +72,34 @@ const HeroSection = () => {
   }
 
   if (slides.length === 0) {
-    return null; // or show a fallback message
+    return null;
   }
 
   return (
     <section className="bg-[#F8FAFC] py-6 lg:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* ===== LEFT CATEGORIES ===== */}
+          {/* ===== LEFT CATEGORIES (DYNAMIC) ===== */}
           <div className="lg:col-span-2 hidden lg:block">
             <div className="bg-white rounded-2xl p-5 h-full border border-gray-100 shadow-sm">
               <div className="inline-block bg-red-500 text-white text-[11px] font-bold px-3 py-1 rounded-full mb-5 tracking-wide">
                 SALE 40% OFF
               </div>
               <ul className="space-y-0.5">
-                {categories.map((cat) => (
-                  <li key={cat}>
-                    <Link
-                      href={`/products/${cat
-                        .toLowerCase()
-                        .replace(/ & /g, "-")
-                        .replace(/, /g, "-")
-                        .replace(/ /g, "-")}`}
-                      className="block py-2 px-2 -mx-2 rounded-lg text-[13px] font-medium text-[#0B1D36] hover:bg-[#E8F7FC] hover:text-[#00A8E8] transition-all"
-                    >
-                      {cat}
-                    </Link>
-                  </li>
-                ))}
+                {categories.length === 0 ? (
+                  <li className="text-sm text-gray-400 py-2">No categories yet</li>
+                ) : (
+                  categories.map((cat) => (
+                    <li key={cat}>
+                      <Link
+                        href={`/products?category=${encodeURIComponent(cat)}`}
+                        className="block py-2 px-2 -mx-2 rounded-lg text-[13px] font-medium text-[#0B1D36] hover:bg-[#E8F7FC] hover:text-[#00A8E8] transition-all"
+                      >
+                        {cat}
+                      </Link>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
           </div>
@@ -118,8 +116,12 @@ const HeroSection = () => {
                       : "opacity-0 scale-105 z-0"
                   }`}
                 >
-                  <div className={`absolute inset-0 ${slide.bg || "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]"}`}>
-                    {/* Background Image with overlay */}
+                  <div
+                    className={`absolute inset-0 ${
+                      slide.bg ||
+                      "bg-gradient-to-br from-[#0B1D36] to-[#132B4A]"
+                    }`}
+                  >
                     <div className="absolute inset-0">
                       <Image
                         src={getImageUrl(slide.image)}
@@ -131,7 +133,6 @@ const HeroSection = () => {
                       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
                     </div>
 
-                    {/* Content */}
                     <div className="relative h-full flex flex-col justify-center px-8 md:px-12 z-20 max-w-lg">
                       <span className="text-[#00A8E8] text-xs font-semibold tracking-[0.2em] uppercase mb-3">
                         {slide.subtitle}
@@ -190,7 +191,6 @@ const HeroSection = () => {
 
           {/* ===== RIGHT SIDE CARDS ===== */}
           <div className="lg:col-span-3 flex flex-col gap-4">
-            {/* Smartwatch Card */}
             <Link
               href="/products/smartwatches"
               className="relative h-[210px] rounded-2xl overflow-hidden group shadow-md"
@@ -220,7 +220,6 @@ const HeroSection = () => {
               </div>
             </Link>
 
-            {/* Keyboard Card */}
             <Link
               href="/products/keyboards"
               className="relative h-[210px] rounded-2xl overflow-hidden group shadow-md"
@@ -250,7 +249,6 @@ const HeroSection = () => {
 
         {/* ===== BOTTOM PROMO ROW ===== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-          {/* Gaming Console */}
           <Link
             href="/products/gaming"
             className="relative h-[190px] rounded-2xl overflow-hidden group shadow-md bg-white border border-gray-100"
@@ -284,7 +282,6 @@ const HeroSection = () => {
             </div>
           </Link>
 
-          {/* Action Camera */}
           <Link
             href="/products/cameras"
             className="relative h-[190px] rounded-2xl overflow-hidden group shadow-md"
