@@ -5,197 +5,28 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  SlidersHorizontal,
-  X,
-  Grid3X3,
-  List,
-  Star,
-  RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Grid3X3,
+  List,
+  RotateCcw,
+  SlidersHorizontal,
+  Star,
+  X,
 } from "lucide-react";
 import ProductCard from "@/components/websitecommon/productcard";
 
-const allProducts = [
-  {
-    id: 1,
-    title: "Apple MagSafe Battery Pack",
-    price: 99.99,
-    oldPrice: 129.99,
-    rating: 4.6,
-    reviews: 128,
-    image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600&q=80",
-    stock: "Low Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "accessories",
-    brand: "Apple",
-  },
-  {
-    id: 2,
-    title: "Sony WH-1000XM5 Wireless Headphones",
-    price: 348.0,
-    oldPrice: 399.99,
-    rating: 4.8,
-    reviews: 312,
-    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "sounds",
-    brand: "Sony",
-  },
-  {
-    id: 3,
-    title: "Samsung Galaxy Buds3 Pro",
-    price: 199.99,
-    oldPrice: 249.99,
-    rating: 4.5,
-    reviews: 89,
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-    category: "accessories",
-    brand: "Samsung",
-  },
-  {
-    id: 4,
-    title: "Anker 737 Power Bank 24000mAh",
-    price: 119.99,
-    oldPrice: 149.99,
-    rating: 4.7,
-    reviews: 205,
-    image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600&q=80",
-    stock: "Low Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "accessories",
-    brand: "Anker",
-  },
-  {
-    id: 5,
-    title: "Apple AirPods Pro 2nd Gen",
-    price: 229.0,
-    oldPrice: 249.0,
-    rating: 4.9,
-    reviews: 540,
-    image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-    category: "accessories",
-    brand: "Apple",
-  },
-  {
-    id: 6,
-    title: "MacBook Pro 16-inch M3 Pro",
-    price: 2499,
-    oldPrice: 2799,
-    rating: 4.8,
-    reviews: 1240,
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "laptops",
-    brand: "Apple",
-  },
-  {
-    id: 7,
-    title: "iPhone 16 Pro Max",
-    price: 1199,
-    oldPrice: 1299,
-    rating: 4.9,
-    reviews: 3200,
-    image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "cell-phones",
-    brand: "Apple",
-  },
-  {
-    id: 8,
-    title: "Dell XPS 15 OLED",
-    price: 1899,
-    oldPrice: 2199,
-    rating: 4.6,
-    reviews: 890,
-    image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "laptops",
-    brand: "Dell",
-  },
-  {
-    id: 9,
-    title: "iPad Pro 13-inch M4",
-    price: 1299,
-    oldPrice: 1499,
-    rating: 4.8,
-    reviews: 670,
-    image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "tablets",
-    brand: "Apple",
-  },
-  {
-    id: 10,
-    title: "Logitech MX Master 3S",
-    price: 99.99,
-    oldPrice: 119.99,
-    rating: 4.7,
-    reviews: 1450,
-    image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&q=80",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-    category: "accessories",
-    brand: "Logitech",
-  },
-  {
-    id: 11,
-    title: "Samsung Odyssey G9 Monitor",
-    price: 1299,
-    oldPrice: 1599,
-    rating: 4.5,
-    reviews: 320,
-    image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&q=80",
-    stock: "Out of Stock" as const,
-    freeShipping: false,
-    freeGift: false,
-    category: "pc-computers",
-    brand: "Samsung",
-  },
-  {
-    id: 12,
-    title: "PlayStation 5 Slim",
-    price: 499,
-    oldPrice: 549,
-    rating: 4.9,
-    reviews: 2100,
-    image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=600&q=80",
-    stock: "Low Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-    category: "gaming-vr",
-    brand: "Sony",
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const categories = [
   { label: "All", value: "" },
-  { label: "Laptops", value: "laptops" },
-  { label: "PC & Computers", value: "pc-computers" },
-  { label: "Cell Phones", value: "cell-phones" },
-  { label: "Tablets", value: "tablets" },
-  { label: "Gaming & VR", value: "gaming-vr" },
-  { label: "Accessories", value: "accessories" },
-  { label: "Sounds", value: "sounds" },
+  { label: "Laptops", value: "Laptops" },
+  { label: "PC & Computers", value: "PC & Computers" },
+  { label: "Cell Phones", value: "Cell Phones" },
+  { label: "Tablets", value: "Tablets" },
+  { label: "Gaming & VR", value: "Gaming & VR" },
+  { label: "Accessories", value: "Accessories" },
+  { label: "Sounds", value: "Sounds" },
 ];
 
 const brands = ["Apple", "Samsung", "Sony", "Dell", "Anker", "Logitech"];
@@ -211,6 +42,9 @@ export default function ProductsListing({
 }: ProductsListingProps) {
   const router = useRouter();
 
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedBrand, setSelectedBrand] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState("");
@@ -222,17 +56,36 @@ export default function ProductsListing({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Fetch products from backend
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_URL}/api/products`);
+        const data = await res.json();
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
     setSelectedCategory(initialCategory);
     setCurrentPage(1);
   }, [initialCategory]);
 
   const filteredProducts = useMemo(() => {
-    let result = [...allProducts];
+    let result = [...products];
 
     if (selectedCategory) {
-      result = result.filter((p) => p.category === selectedCategory);
+      result = result.filter(
+        (p) => p.category?.toLowerCase() === selectedCategory.toLowerCase()
+      );
     }
     if (selectedBrand.length > 0) {
       result = result.filter((p) => selectedBrand.includes(p.brand));
@@ -243,7 +96,7 @@ export default function ProductsListing({
     result = result.filter((p) => p.price >= min && p.price <= max);
 
     if (selectedRating) {
-      result = result.filter((p) => p.rating >= selectedRating);
+      result = result.filter((p) => (p.rating || 0) >= selectedRating);
     }
     if (selectedStock === "in-stock") {
       result = result.filter((p) => p.stock !== "Out of Stock");
@@ -260,15 +113,20 @@ export default function ProductsListing({
         result.sort((a, b) => b.price - a.price);
         break;
       case "rating":
-        result.sort((a, b) => b.rating - a.rating);
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
       case "newest":
-        result.sort((a, b) => b.id - a.id);
+        result.sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime()
+        );
         break;
     }
 
     return result;
   }, [
+    products,
     selectedCategory,
     selectedBrand,
     minPrice,
@@ -285,13 +143,20 @@ export default function ProductsListing({
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
-  }, [selectedCategory, selectedBrand, minPrice, maxPrice, selectedRating, selectedStock, sortBy]);
+  }, [
+    selectedCategory,
+    selectedBrand,
+    minPrice,
+    maxPrice,
+    selectedRating,
+    selectedStock,
+    sortBy,
+  ]);
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
-    if (value) router.push(`/products?category=${value}`);
+    if (value) router.push(`/products?category=${encodeURIComponent(value)}`);
     else router.push("/products");
   };
 
@@ -320,12 +185,7 @@ export default function ProductsListing({
     (selectedRating ? 1 : 0) +
     (selectedStock ? 1 : 0);
 
-  const pageTitle = selectedCategory
-    ? selectedCategory
-        .split("-")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ")
-    : "All Products";
+  const pageTitle = selectedCategory || "All Products";
 
   // ===================== FILTER SIDEBAR =====================
   const FilterSidebar = () => (
@@ -423,7 +283,9 @@ export default function ProductsListing({
           {ratingOptions.map((val) => (
             <button
               key={val}
-              onClick={() => setSelectedRating(selectedRating === val ? null : val)}
+              onClick={() =>
+                setSelectedRating(selectedRating === val ? null : val)
+              }
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] transition-all ${
                 selectedRating === val
                   ? "bg-amber-50 text-amber-700"
@@ -477,13 +339,26 @@ export default function ProductsListing({
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="bg-[#F4F6F9] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-[#00A8E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-500">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#F4F6F9] min-h-screen pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-7">
         {/* Header */}
         <div className="mb-7">
           <nav className="flex items-center gap-2 text-[13px] text-gray-400 mb-2">
-            <Link href="/" className="hover:text-[#00A8E8]">Home</Link>
+            <Link href="/" className="hover:text-[#00A8E8]">
+              Home
+            </Link>
             <span>/</span>
             <span className="text-[#0B1D36] font-medium">{pageTitle}</span>
           </nav>
@@ -558,7 +433,7 @@ export default function ProductsListing({
                   ))}
                 </div>
 
-                <div className="flex bg-white rounded-xl p-1 border border-gray-100 shadow-sm">
+                <div className="flex bg-[#0B1D36] rounded-xl p-1 shadow-sm">
                   <button
                     onClick={() => setViewMode("grid")}
                     className={`p-2 rounded-lg transition-all ${
@@ -586,8 +461,12 @@ export default function ProductsListing({
             {/* Products */}
             {paginatedProducts.length === 0 ? (
               <div className="bg-white rounded-2xl py-20 text-center border border-gray-100">
-                <p className="text-[#0B1D36] font-semibold text-lg">No products found</p>
-                <p className="text-gray-400 text-sm mt-1 mb-5">Try adjusting your filters</p>
+                <p className="text-[#0B1D36] font-semibold text-lg">
+                  No products found
+                </p>
+                <p className="text-gray-400 text-sm mt-1 mb-5">
+                  Try adjusting your filters
+                </p>
                 <button
                   onClick={resetFilters}
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0B1D36] text-white text-sm font-semibold rounded-xl"
@@ -607,18 +486,18 @@ export default function ProductsListing({
                 >
                   {paginatedProducts.map((product) => (
                     <ProductCard
-                      key={product.id}
-                      id={product.id}
+                      key={product._id}
+                      id={product._id}
                       title={product.title}
                       price={product.price}
                       oldPrice={product.oldPrice}
-                      rating={product.rating}
-                      reviews={product.reviews}
-                      image={product.image}
-                      stock={product.stock}
+                      rating={product.rating || 4.5}
+                      reviews={product.reviews || 0}
+                      image={product.images?.[0] || ""}
+                      stock={product.stock || "In Stock"}
                       freeShipping={product.freeShipping}
                       freeGift={product.freeGift}
-                      layout={viewMode}   // ← important
+                      layout={viewMode}
                     />
                   ))}
                 </div>
@@ -633,21 +512,25 @@ export default function ProductsListing({
                     >
                       <ChevronLeft size={18} />
                     </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
-                          currentPage === page
-                            ? "bg-[#0B1D36] text-white shadow-md"
-                            : "text-gray-500 hover:bg-white"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
+                            currentPage === page
+                              ? "bg-[#0B1D36] text-white shadow-md"
+                              : "text-gray-500 hover:bg-white"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
                     <button
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
                       disabled={currentPage === totalPages}
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white disabled:opacity-30 transition-all"
                     >
@@ -664,11 +547,17 @@ export default function ProductsListing({
       {/* Mobile Filters */}
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
           <div className="absolute right-0 top-0 bottom-0 w-full max-w-[320px] bg-white shadow-2xl flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b">
               <h3 className="font-bold text-[#0B1D36]">Filters</h3>
-              <button onClick={() => setMobileFiltersOpen(false)} className="p-2 rounded-full hover:bg-gray-50">
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="p-2 rounded-full hover:bg-gray-50"
+              >
                 <X size={18} />
               </button>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Plus,
@@ -13,127 +13,76 @@ import {
   ImagePlus,
 } from "lucide-react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 interface Product {
-  id: number;
+  _id: string;
   title: string;
   price: number;
   oldPrice?: number;
   category: string;
+  brand?: string;
   stock: "In Stock" | "Low Stock" | "Out of Stock";
-  images: string[]; // main + sub images
+  images: string[];
   rating: number;
+  description?: string;
+  features?: string[];
+  freeShipping?: boolean;
+  freeGift?: boolean;
+  isActive?: boolean;
 }
 
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    title: "Apple MagSafe Battery Pack",
-    price: 99.99,
-    oldPrice: 129.99,
-    category: "Accessories",
-    stock: "Low Stock",
-    images: [
-      "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=400&q=80",
-      "https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=400&q=80",
-      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&q=80",
-    ],
-    rating: 4.6,
-  },
-  {
-    id: 2,
-    title: "Sony WH-1000XM5 Wireless Headphones",
-    price: 348,
-    oldPrice: 399.99,
-    category: "Sounds",
-    stock: "In Stock",
-    images: [
-      "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&q=80",
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80",
-    ],
-    rating: 4.8,
-  },
-  {
-    id: 3,
-    title: "MacBook Air M2 13-inch",
-    price: 1249,
-    oldPrice: 1499,
-    category: "Laptops",
-    stock: "In Stock",
-    images: [
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&q=80",
-    ],
-    rating: 4.9,
-  },
-  {
-    id: 4,
-    title: "Samsung Galaxy S23 Ultra",
-    price: 1199,
-    oldPrice: 1299,
-    category: "Cell Phones",
-    stock: "In Stock",
-    images: [
-      "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80",
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80",
-    ],
-    rating: 4.9,
-  },
-  {
-    id: 5,
-    title: "PlayStation 5 Slim Console",
-    price: 499,
-    oldPrice: 549,
-    category: "Gaming & VR",
-    stock: "Low Stock",
-    images: [
-      "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&q=80",
-    ],
-    rating: 4.9,
-  },
-  {
-    id: 6,
-    title: "Apple AirPods Pro 2nd Gen",
-    price: 229,
-    oldPrice: 249,
-    category: "Accessories",
-    stock: "Out of Stock",
-    images: [
-      "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400&q=80",
-    ],
-    rating: 4.8,
-  },
-];
-
-const categories = [
-  "All",
-  "Laptops",
-  "Cell Phones",
-  "Accessories",
-  "Sounds",
-  "Gaming & VR",
-  "Tablets",
-];
-
-const MAX_IMAGES = 5; // 1 main + 4 sub
+const MAX_IMAGES = 5;
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
     price: "",
     oldPrice: "",
-    category: "Laptops",
+    category: "",
+    brand: "",
     stock: "In Stock" as Product["stock"],
-    images: [""] as string[], // at least one slot
+    images: [""] as string[],
+    description: "",
+    freeShipping: false,
+    freeGift: false,
   });
+
+  // Fetch products + categories
+  const fetchData = async () => {
+    try {
+      const [productsRes, categoriesRes] = await Promise.all([
+        fetch(`${API_URL}/api/products/admin/all`),
+        fetch(`${API_URL}/api/products/categories`),
+      ]);
+
+      const productsData = await productsRes.json();
+      const categoriesData = await categoriesRes.json();
+
+      setProducts(Array.isArray(productsData) ? productsData : []);
+      setExistingCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+  }, []);
 
   const filtered = products.filter((p) => {
     const matchSearch = p.title.toLowerCase().includes(search.toLowerCase());
-    const matchCat = category === "All" || p.category === category;
+    const matchCat =
+      categoryFilter === "All" || p.category === categoryFilter;
     return matchSearch && matchCat;
   });
 
@@ -143,9 +92,13 @@ export default function AdminProductsPage() {
       title: "",
       price: "",
       oldPrice: "",
-      category: "Laptops",
+      category: "",
+      brand: "",
       stock: "In Stock",
       images: [""],
+      description: "",
+      freeShipping: false,
+      freeGift: false,
     });
     setShowModal(true);
   };
@@ -156,9 +109,13 @@ export default function AdminProductsPage() {
       title: product.title,
       price: String(product.price),
       oldPrice: product.oldPrice ? String(product.oldPrice) : "",
-      category: product.category,
+      category: product.category || "",
+      brand: product.brand || "",
       stock: product.stock,
-      images: product.images.length ? [...product.images] : [""],
+      images: product.images?.length ? [...product.images] : [""],
+      description: product.description || "",
+      freeShipping: product.freeShipping || false,
+      freeGift: product.freeGift || false,
     });
     setShowModal(true);
   };
@@ -184,42 +141,69 @@ export default function AdminProductsPage() {
     }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+
     const cleanImages = form.images
       .map((url) => url.trim())
       .filter((url) => url.length > 0);
 
     if (cleanImages.length === 0) {
       alert("Please add at least one image URL");
+      setLoading(false);
       return;
     }
 
-    const payload: Product = {
-      id: editing?.id ?? Date.now(),
+    if (!form.category.trim()) {
+      alert("Please enter a category");
+      setLoading(false);
+      return;
+    }
+
+    const payload = {
       title: form.title,
       price: parseFloat(form.price) || 0,
       oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : undefined,
-      category: form.category,
+      category: form.category.trim(),
+      brand: form.brand,
       stock: form.stock,
       images: cleanImages,
-      rating: editing?.rating ?? 4.5,
+      description: form.description,
+      freeShipping: form.freeShipping,
+      freeGift: form.freeGift,
     };
 
-    if (editing) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editing.id ? payload : p))
-      );
-    } else {
-      setProducts((prev) => [payload, ...prev]);
+    try {
+      const url = editing
+        ? `${API_URL}/api/products/${editing._id}`
+        : `${API_URL}/api/products`;
+      const method = editing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to save");
+      }
+
+      setShowModal(false);
+      fetchData(); // refresh products + categories
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm("Delete this product?")) {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-    }
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this product?")) return;
+    await fetch(`${API_URL}/api/products/${id}`, { method: "DELETE" });
+    fetchData();
   };
 
   const stockColor = (stock: Product["stock"]) => {
@@ -233,8 +217,8 @@ export default function AdminProductsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-[#0B1D36]">Products</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h2 className="text-xl font-bold text-slate-800">Products</h2>
+          <p className="text-sm text-slate-500 mt-0.5">
             {filtered.length} product{filtered.length !== 1 ? "s" : ""} found
           </p>
         </div>
@@ -248,31 +232,32 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-5 flex flex-col sm:flex-row gap-3">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-5 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search
             size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
           />
           <input
             type="text"
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] focus:ring-2 focus:ring-[#00A8E8]/15 text-[#0B1D36]"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] focus:ring-2 focus:ring-[#00A8E8]/15 text-slate-700"
           />
         </div>
         <div className="relative">
           <Filter
             size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
           />
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="pl-9 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36] bg-white appearance-none min-w-[160px]"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="pl-9 pr-8 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700 bg-white appearance-none min-w-[160px]"
           >
-            {categories.map((c) => (
+            <option value="All">All</option>
+            {existingCategories.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
@@ -282,27 +267,27 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/80">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-100 bg-slate-50/80">
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Product
                 </th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">
                   Category
                 </th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Price
                 </th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
                   Stock
                 </th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">
                   Images
                 </th>
-                <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <th className="text-right px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -311,45 +296,46 @@ export default function AdminProductsPage() {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-16 text-center">
-                    <Package size={32} className="mx-auto text-gray-200 mb-2" />
-                    <p className="text-gray-400 text-sm">No products found</p>
+                    <Package size={32} className="mx-auto text-slate-200 mb-2" />
+                    <p className="text-slate-400 text-sm">No products found</p>
                   </td>
                 </tr>
               ) : (
                 filtered.map((product) => (
                   <tr
-                    key={product.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
+                    key={product._id}
+                    className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
                   >
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-xl bg-[#F7F8FA] overflow-hidden shrink-0">
+                        <div className="relative w-12 h-12 rounded-xl bg-slate-50 overflow-hidden shrink-0">
                           <Image
-                            src={product.images[0]}
+                            src={product.images[0] || "/placeholder.png"}
                             alt={product.title}
                             fill
                             className="object-contain p-1"
+                            unoptimized
                           />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-[#0B1D36] line-clamp-1">
+                          <p className="font-medium text-slate-800 line-clamp-1">
                             {product.title}
                           </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            ID: {product.id}
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            ID: {product._id.slice(-6)}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4 hidden md:table-cell">
-                      <span className="text-gray-500">{product.category}</span>
+                      <span className="text-slate-500">{product.category}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-[#0B1D36]">
+                      <p className="font-semibold text-slate-800">
                         ${product.price.toFixed(2)}
                       </p>
                       {product.oldPrice && (
-                        <p className="text-xs text-gray-400 line-through">
+                        <p className="text-xs text-slate-400 line-through">
                           ${product.oldPrice.toFixed(2)}
                         </p>
                       )}
@@ -368,40 +354,35 @@ export default function AdminProductsPage() {
                         {product.images.slice(0, 4).map((img, i) => (
                           <div
                             key={i}
-                            className="relative w-8 h-8 rounded-lg border-2 border-white bg-[#F7F8FA] overflow-hidden"
+                            className="relative w-8 h-8 rounded-lg border-2 border-white bg-slate-50 overflow-hidden"
                           >
                             <Image
                               src={img}
                               alt=""
                               fill
                               className="object-cover"
+                              unoptimized
                             />
                           </div>
                         ))}
                         {product.images.length > 4 && (
-                          <span className="text-[10px] text-gray-400 ml-2 pl-1">
+                          <span className="text-[10px] text-slate-400 ml-2 pl-1">
                             +{product.images.length - 4}
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-1">
-                        {product.images.length} image
-                        {product.images.length !== 1 ? "s" : ""}
-                      </p>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openEdit(product)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-[#F0F9FF] hover:text-[#00A8E8] transition-colors"
-                          title="Edit"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-[#00A8E8] transition-colors"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
-                          onClick={() => handleDelete(product.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                          title="Delete"
+                          onClick={() => handleDelete(product._id)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -423,22 +404,23 @@ export default function AdminProductsPage() {
             onClick={() => setShowModal(false)}
           />
           <div className="relative bg-white rounded-2xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-bold text-[#0B1D36]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <h3 className="text-lg font-bold text-slate-800">
                 {editing ? "Edit Product" : "Add Product"}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
               >
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleSave} className="p-6 space-y-4">
+              {/* Product Name */}
               <div>
-                <label className="block text-[13px] font-medium text-[#0B1D36] mb-1.5">
-                  Product name
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Product name *
                 </label>
                 <input
                   type="text"
@@ -447,15 +429,15 @@ export default function AdminProductsPage() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, title: e.target.value }))
                   }
-                  placeholder="Product title"
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36]"
+                  className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                 />
               </div>
 
+              {/* Price */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[13px] font-medium text-[#0B1D36] mb-1.5">
-                    Price ($)
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Price ($) *
                   </label>
                   <input
                     type="number"
@@ -465,12 +447,11 @@ export default function AdminProductsPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, price: e.target.value }))
                     }
-                    placeholder="0.00"
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36]"
+                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-[13px] font-medium text-[#0B1D36] mb-1.5">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Old price ($)
                   </label>
                   <input
@@ -480,36 +461,41 @@ export default function AdminProductsPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, oldPrice: e.target.value }))
                     }
-                    placeholder="Optional"
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36]"
+                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                   />
                 </div>
               </div>
 
+              {/* Category + Stock */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[13px] font-medium text-[#0B1D36] mb-1.5">
-                    Category
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Category *
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    required
+                    list="category-list"
                     value={form.category}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, category: e.target.value }))
                     }
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36] bg-white"
-                  >
-                    {categories
-                      .filter((c) => c !== "All")
-                      .map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                  </select>
+                    placeholder="Type or select category"
+                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
+                  />
+                  <datalist id="category-list">
+                    {existingCategories.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                  <p className="text-xs text-slate-400 mt-1">
+                    You can type a new category
+                  </p>
                 </div>
+
                 <div>
-                  <label className="block text-[13px] font-medium text-[#0B1D36] mb-1.5">
-                    Stock status
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    Stock
                   </label>
                   <select
                     value={form.stock}
@@ -519,7 +505,7 @@ export default function AdminProductsPage() {
                         stock: e.target.value as Product["stock"],
                       }))
                     }
-                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36] bg-white"
+                    className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700 bg-white"
                   >
                     <option value="In Stock">In Stock</option>
                     <option value="Low Stock">Low Stock</option>
@@ -528,85 +514,88 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Images — main + sub */}
+              {/* Brand */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Brand
+                </label>
+                <input
+                  type="text"
+                  value={form.brand}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, brand: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                  rows={3}
+                  className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
+                />
+              </div>
+
+              {/* Images */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[13px] font-medium text-[#0B1D36]">
-                    Images
-                    <span className="text-gray-400 font-normal ml-1">
-                      (1 main + up to 4 more)
-                    </span>
+                  <label className="text-sm font-medium text-slate-700">
+                    Images (1 main + up to 4)
                   </label>
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-xs text-slate-400">
                     {form.images.length}/{MAX_IMAGES}
                   </span>
                 </div>
-
                 <div className="space-y-3">
                   {form.images.map((url, index) => (
-                    <div key={index}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
-                            index === 0
-                              ? "bg-[#00A8E8]/10 text-[#00A8E8]"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          {index === 0 ? "Main" : `Sub ${index}`}
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <input
-                            type="url"
-                            value={url}
-                            onChange={(e) =>
-                              updateImage(index, e.target.value)
-                            }
-                            placeholder={
-                              index === 0
-                                ? "Main image URL (required)"
-                                : "Sub image URL"
-                            }
-                            className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-[#0B1D36]"
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => updateImage(index, e.target.value)}
+                        placeholder={
+                          index === 0
+                            ? "Main image URL *"
+                            : "Sub image URL"
+                        }
+                        className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
+                      />
+                      {url.trim() && (
+                        <div className="relative w-11 h-11 rounded-xl bg-slate-50 overflow-hidden shrink-0 border">
+                          <Image
+                            src={url}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            unoptimized
                           />
                         </div>
-                        {/* Preview thumbnail */}
-                        {url.trim() && (
-                          <div className="relative w-11 h-11 rounded-xl bg-[#F7F8FA] overflow-hidden shrink-0 border border-gray-100">
-                            <Image
-                              src={url}
-                              alt=""
-                              fill
-                              className="object-cover"
-                              unoptimized
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display =
-                                  "none";
-                              }}
-                            />
-                          </div>
-                        )}
-                        {form.images.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeImageField(index)}
-                            className="w-11 h-11 flex items-center justify-center rounded-xl border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors shrink-0"
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                      </div>
+                      )}
+                      {form.images.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeImageField(index)}
+                          className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
-
                 {form.images.length < MAX_IMAGES && (
                   <button
                     type="button"
                     onClick={addImageField}
-                    className="mt-3 w-full h-10 flex items-center justify-center gap-2 border border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-[#00A8E8] hover:text-[#00A8E8] hover:bg-[#F0F9FF] transition-colors"
+                    className="mt-3 w-full h-10 flex items-center justify-center gap-2 border border-dashed border-slate-200 rounded-xl text-sm text-slate-500 hover:border-[#00A8E8] hover:text-[#00A8E8]"
                   >
                     <ImagePlus size={16} />
                     Add another image
@@ -614,19 +603,52 @@ export default function AdminProductsPage() {
                 )}
               </div>
 
+              {/* Free Shipping / Gift */}
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={form.freeShipping}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        freeShipping: e.target.checked,
+                      }))
+                    }
+                  />
+                  Free Shipping
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={form.freeGift}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, freeGift: e.target.checked }))
+                    }
+                  />
+                  Free Gift
+                </label>
+              </div>
+
+              {/* Buttons */}
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 h-11 text-sm font-semibold text-[#0B1D36] bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                  className="flex-1 h-11 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 h-11 text-sm font-semibold text-white bg-[#0B1D36] hover:bg-[#00A8E8] rounded-xl transition-colors"
+                  disabled={loading}
+                  className="flex-1 h-11 text-sm font-semibold text-white bg-[#0B1D36] hover:bg-[#00A8E8] rounded-xl disabled:opacity-50"
                 >
-                  {editing ? "Save Changes" : "Add Product"}
+                  {loading
+                    ? "Saving..."
+                    : editing
+                    ? "Save Changes"
+                    : "Add Product"}
                 </button>
               </div>
             </form>

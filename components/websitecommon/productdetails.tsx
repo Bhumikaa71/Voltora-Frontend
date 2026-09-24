@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,11 +18,16 @@ import {
 import { useStore } from "@/lib/store";
 import ProductCard from "./productcard";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 interface ProductDetailsProps {
   productId?: string;
 }
 
 const ProductDetails = ({ productId }: ProductDetailsProps) => {
+  const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [userRating, setUserRating] = useState(0);
@@ -45,105 +50,86 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
       comment:
         "Good product but a bit expensive. Charging is very convenient though.",
     },
-    {
-      id: 3,
-      name: "Suresh M.",
-      rating: 5,
-      date: "2 weeks ago",
-      comment: "Perfect for travel. I no longer worry about my phone dying.",
-    },
   ]);
 
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } =
     useStore();
 
-  const product = {
-    id: productId || "1",
-    title: "Apple MagSafe Battery Pack",
-    price: 99.99,
-    oldPrice: 129.99,
-    rating: 4.6,
-    reviews: 128,
-    stock: "Low Stock",
-    sku: "APL-MSG-BP-001",
-    description:
-      "The MagSafe Battery Pack attaches magnetically and provides wireless charging for iPhone 12 and later. Perfect for on-the-go power with a sleek, portable design that snaps right onto the back of your phone.",
-    features: [
-      "Magnetic attachment for iPhone 12 and later",
-      "Up to 15 hours of additional battery life",
-      "Wireless charging with MagSafe",
-      "Status LED indicator",
-      "Compact and lightweight design",
-      "USB-C charging port",
-    ],
-    images: [
-      "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=800&q=80",
-      "https://images.unsplash.com/photo-1609081219090-a6d81d3085bf?w=800&q=80",
-      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=800&q=80",
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=80",
-    ],
-  };
+  useEffect(() => {
+    if (!productId) return;
 
-  const isWishlisted = isInWishlist(product.id);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-  const relatedProducts = [
-    {
-      id: 2,
-      title: "Sony WH-1000XM5 Wireless Headphones",
-      price: 348.0,
-      oldPrice: 399.99,
-      rating: 4.8,
-      reviews: 312,
-      image:
-        "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&q=80",
-      stock: "In Stock" as const,
-      freeShipping: true,
-      freeGift: false,
-    },
-    {
-      id: 3,
-      title: "Samsung Galaxy Buds3 Pro",
-      price: 199.99,
-      oldPrice: 249.99,
-      rating: 4.5,
-      reviews: 89,
-      image:
-        "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&q=80",
-      stock: "In Stock" as const,
-      freeShipping: true,
-      freeGift: true,
-    },
-    {
-      id: 4,
-      title: "Anker 737 Power Bank 24000mAh",
-      price: 119.99,
-      oldPrice: 149.99,
-      rating: 4.7,
-      reviews: 205,
-      image:
-        "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600&q=80",
-      stock: "Low Stock" as const,
-      freeShipping: true,
-      freeGift: false,
-    },
-    {
-      id: 5,
-      title: "Apple AirPods Pro 2nd Gen",
-      price: 229.0,
-      oldPrice: 249.0,
-      rating: 4.9,
-      reviews: 540,
-      image:
-        "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&q=80",
-      stock: "In Stock" as const,
-      freeShipping: true,
-      freeGift: true,
-    },
-  ];
+        // Fetch single product
+        const res = await fetch(`${API_URL}/api/products/${productId}`);
+        if (!res.ok) throw new Error("Product not found");
+        const data = await res.json();
+        setProduct(data);
 
-  const discount = Math.round(
-    ((product.oldPrice - product.price) / product.oldPrice) * 100
-  );
+        // Fetch related products (same category)
+        const relatedRes = await fetch(
+          `${API_URL}/api/products?category=${encodeURIComponent(
+            data.category || ""
+          )}`
+        );
+        const relatedData = await relatedRes.json();
+        setRelatedProducts(
+          (Array.isArray(relatedData) ? relatedData : [])
+            .filter((p: any) => p._id !== data._id)
+            .slice(0, 4)
+        );
+      } catch (err) {
+        console.error(err);
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [productId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-[#00A8E8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-slate-500">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <p className="text-xl font-semibold text-[#0B1D36] mb-2">
+            Product not found
+          </p>
+          <Link
+            href="/products"
+            className="text-[#00A8E8] hover:underline text-sm"
+          >
+            ← Back to Products
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const isWishlisted = isInWishlist(product._id);
+  const images = product.images?.length
+    ? product.images
+    : ["https://via.placeholder.com/600"];
+  const discount =
+    product.oldPrice && product.oldPrice > product.price
+      ? Math.round(
+          ((product.oldPrice - product.price) / product.oldPrice) * 100
+        )
+      : 0;
 
   const handleSubmitReview = () => {
     if (!userRating || !reviewName.trim() || !reviewText.trim()) {
@@ -168,11 +154,11 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
   const handleAddToCart = () => {
     addToCart(
       {
-        id: product.id,
+        id: product._id,
         title: product.title,
         price: product.price,
         oldPrice: product.oldPrice,
-        image: product.images[0],
+        image: images[0],
         stock: product.stock,
       },
       quantity
@@ -181,16 +167,16 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
 
   const handleWishlist = () => {
     if (isWishlisted) {
-      removeFromWishlist(product.id);
+      removeFromWishlist(product._id);
     } else {
       addToWishlist({
-        id: product.id,
+        id: product._id,
         title: product.title,
         price: product.price,
         oldPrice: product.oldPrice,
-        rating: product.rating,
-        reviews: product.reviews,
-        image: product.images[0],
+        rating: product.rating || 4.5,
+        reviews: product.reviews || 0,
+        image: images[0],
         stock: product.stock,
       });
     }
@@ -210,7 +196,9 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
               Products
             </Link>
             <ChevronRight size={14} />
-            <span className="text-[#0B1D36] font-medium">{product.title}</span>
+            <span className="text-[#0B1D36] font-medium line-clamp-1">
+              {product.title}
+            </span>
           </div>
         </div>
       </div>
@@ -221,11 +209,12 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
           <div>
             <div className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-4">
               <Image
-                src={product.images[selectedImage]}
+                src={images[selectedImage]}
                 alt={product.title}
                 fill
                 className="object-contain p-8"
                 priority
+                unoptimized
               />
               {discount > 0 && (
                 <span className="absolute top-4 left-4 bg-[#E5484D] text-white text-sm font-bold px-3 py-1.5 rounded-full">
@@ -233,18 +222,24 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                 </span>
               )}
             </div>
-            <div className="flex gap-3">
-              {product.images.map((img, index) => (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {images.map((img: string, index: number) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                  className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
                     selectedImage === index
                       ? "border-[#00A8E8]"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  <Image src={img} alt="" fill className="object-cover" />
+                  <Image
+                    src={img}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
                 </button>
               ))}
             </div>
@@ -259,7 +254,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                     key={i}
                     size={16}
                     className={
-                      i < Math.round(product.rating)
+                      i < Math.round(product.rating || 4.5)
                         ? "fill-amber-400 text-amber-400"
                         : "fill-gray-200 text-gray-200"
                     }
@@ -267,7 +262,8 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                 ))}
               </div>
               <span className="text-sm text-gray-500">
-                {product.rating} ({product.reviews} reviews)
+                {(product.rating || 4.5).toFixed(1)} (
+                {product.reviews || 0} reviews)
               </span>
             </div>
 
@@ -277,37 +273,62 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
 
             <div className="flex items-baseline gap-3 mb-4">
               <span className="text-3xl font-bold text-[#0B1D36]">
-                ${product.price.toFixed(2)}
+                ${product.price?.toFixed(2)}
               </span>
-              <span className="text-lg text-gray-400 line-through">
-                ${product.oldPrice.toFixed(2)}
-              </span>
-              <span className="text-sm font-semibold text-[#E5484D]">
-                You save ${(product.oldPrice - product.price).toFixed(2)}
-              </span>
+              {product.oldPrice && (
+                <>
+                  <span className="text-lg text-gray-400 line-through">
+                    ${product.oldPrice.toFixed(2)}
+                  </span>
+                  <span className="text-sm font-semibold text-[#E5484D]">
+                    You save $
+                    {(product.oldPrice - product.price).toFixed(2)}
+                  </span>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-4 mb-6 text-sm">
-              <span className="font-medium text-amber-600">{product.stock}</span>
-              <span className="text-gray-400">|</span>
-              <span className="text-gray-500">SKU: {product.sku}</span>
+              <span
+                className={`font-medium ${
+                  product.stock === "In Stock"
+                    ? "text-emerald-600"
+                    : product.stock === "Low Stock"
+                    ? "text-amber-600"
+                    : "text-red-500"
+                }`}
+              >
+                {product.stock || "In Stock"}
+              </span>
+              {product.brand && (
+                <>
+                  <span className="text-gray-400">|</span>
+                  <span className="text-gray-500">Brand: {product.brand}</span>
+                </>
+              )}
             </div>
 
             <p className="text-gray-600 leading-relaxed mb-6">
-              {product.description}
+              {product.description ||
+                "No description available for this product."}
             </p>
 
-            <ul className="space-y-2.5 mb-8">
-              {product.features.map((feature, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2.5 text-sm text-gray-700"
-                >
-                  <Check size={16} className="text-[#00A8E8] mt-0.5 shrink-0" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
+            {product.features?.length > 0 && (
+              <ul className="space-y-2.5 mb-8">
+                {product.features.map((feature: string, i: number) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2.5 text-sm text-gray-700"
+                  >
+                    <Check
+                      size={16}
+                      className="text-[#00A8E8] mt-0.5 shrink-0"
+                    />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <div className="flex flex-wrap items-center gap-4 mb-8">
               <div className="flex items-center border border-gray-200 rounded-full overflow-hidden">
@@ -317,7 +338,9 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                 >
                   <Minus size={16} />
                 </button>
-                <span className="w-12 text-center font-semibold">{quantity}</span>
+                <span className="w-12 text-center font-semibold">
+                  {quantity}
+                </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
                   className="w-10 h-10 flex items-center justify-center hover:bg-gray-50"
@@ -387,7 +410,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
             <div className="bg-gray-50 rounded-2xl p-6 h-fit">
               <div className="text-center">
                 <div className="text-5xl font-bold text-[#0B1D36]">
-                  {product.rating}
+                  {(product.rating || 4.5).toFixed(1)}
                 </div>
                 <div className="flex justify-center gap-1 my-2">
                   {[...Array(5)].map((_, i) => (
@@ -395,7 +418,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                       key={i}
                       size={18}
                       className={
-                        i < Math.round(product.rating)
+                        i < Math.round(product.rating || 4.5)
                           ? "fill-amber-400 text-amber-400"
                           : "fill-gray-200 text-gray-200"
                       }
@@ -403,7 +426,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                   ))}
                 </div>
                 <p className="text-sm text-gray-500">
-                  Based on {product.reviews} reviews
+                  Based on {product.reviews || 0} reviews
                 </p>
               </div>
             </div>
@@ -481,7 +504,9 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
                           <p className="font-semibold text-[#0B1D36]">
                             {review.name}
                           </p>
-                          <p className="text-xs text-gray-400">{review.date}</p>
+                          <p className="text-xs text-gray-400">
+                            {review.date}
+                          </p>
                         </div>
                       </div>
                       <div className="flex gap-0.5">
@@ -509,36 +534,38 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
         </div>
 
         {/* Related */}
-        <div className="mt-16 border-t border-gray-100 pt-12">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-[#0B1D36]">
-              You May Also Like
-            </h2>
-            <Link
-              href="/products"
-              className="text-sm font-semibold text-[#00A8E8] hover:underline"
-            >
-              View All →
-            </Link>
+        {relatedProducts.length > 0 && (
+          <div className="mt-16 border-t border-gray-100 pt-12">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-[#0B1D36]">
+                You May Also Like
+              </h2>
+              <Link
+                href="/products"
+                className="text-sm font-semibold text-[#00A8E8] hover:underline"
+              >
+                View All →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {relatedProducts.map((item) => (
+                <ProductCard
+                  key={item._id}
+                  id={item._id}
+                  title={item.title}
+                  price={item.price}
+                  oldPrice={item.oldPrice}
+                  rating={item.rating || 4.5}
+                  reviews={item.reviews || 0}
+                  image={item.images?.[0] || ""}
+                  stock={item.stock || "In Stock"}
+                  freeShipping={item.freeShipping}
+                  freeGift={item.freeGift}
+                />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {relatedProducts.map((item) => (
-              <ProductCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                price={item.price}
-                oldPrice={item.oldPrice}
-                rating={item.rating}
-                reviews={item.reviews}
-                image={item.image}
-                stock={item.stock}
-                freeShipping={item.freeShipping}
-                freeGift={item.freeGift}
-              />
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -28,23 +28,27 @@ import {
   Package,
   LogOut,
   UserCircle,
+  Grid,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 
-const categories = [
-  { name: "Laptops", href: "/products?category=laptops", icon: Laptop },
-  { name: "PC & Computers", href: "/products?category=pc-computers", icon: Monitor },
-  { name: "Cell Phones", href: "/products?category=cell-phones", icon: Smartphone },
-  { name: "Tablets", href: "/products?category=tablets", icon: Tablet },
-  { name: "Gaming & VR", href: "/products?category=gaming-vr", icon: Gamepad2 },
-  { name: "Networking", href: "/products?category=networking", icon: Wifi },
-  { name: "Cameras", href: "/products?category=cameras", icon: Camera },
-  { name: "Sounds", href: "/products?category=sounds", icon: Speaker },
-  { name: "Office", href: "/products?category=office", icon: Briefcase },
-  { name: "Storage & USB", href: "/products?category=storage-usb", icon: HardDrive },
-  { name: "Accessories", href: "/products?category=accessories", icon: Headphones },
-  { name: "Clearance", href: "/products?category=clearance", icon: Tag },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+// Icon mapping (optional – falls back to Grid)
+const categoryIcons: Record<string, any> = {
+  Laptops: Laptop,
+  "PC & Computers": Monitor,
+  "Cell Phones": Smartphone,
+  Tablets: Tablet,
+  "Gaming & VR": Gamepad2,
+  Networking: Wifi,
+  Cameras: Camera,
+  Sounds: Speaker,
+  Office: Briefcase,
+  "Storage & USB": HardDrive,
+  Accessories: Headphones,
+  Clearance: Tag,
+};
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -57,10 +61,26 @@ const Navbar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const allCatRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+
+  // Fetch only existing categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/products/categories`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -116,6 +136,9 @@ const Navbar = () => {
     setUserMenuOpen(false);
     router.push("/");
   };
+
+  const getCategoryHref = (cat: string) =>
+    `/products?category=${encodeURIComponent(cat)}`;
 
   return (
     <>
@@ -198,6 +221,7 @@ const Navbar = () => {
                   />
                 </Link>
 
+                {/* PRODUCTS DROPDOWN */}
                 <div
                   className="relative"
                   onMouseEnter={() => setProductsOpen(true)}
@@ -238,25 +262,32 @@ const Navbar = () => {
                               View all →
                             </Link>
                           </div>
-                          <div className="grid grid-cols-3 gap-1">
-                            {categories.map((cat) => {
-                              const Icon = cat.icon;
-                              return (
-                                <Link
-                                  key={cat.name}
-                                  href={cat.href}
-                                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F0F9FF] transition-all group"
-                                >
-                                  <div className="w-9 h-9 rounded-lg bg-[#0B1D36]/[0.04] group-hover:bg-[#00A8E8]/10 flex items-center justify-center text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
-                                    <Icon size={17} strokeWidth={1.8} />
-                                  </div>
-                                  <span className="text-sm font-medium text-[#0B1D36] group-hover:text-[#00A8E8]">
-                                    {cat.name}
-                                  </span>
-                                </Link>
-                              );
-                            })}
-                          </div>
+
+                          {categories.length === 0 ? (
+                            <p className="text-sm text-gray-400 text-center py-6">
+                              No categories yet
+                            </p>
+                          ) : (
+                            <div className="grid grid-cols-3 gap-1">
+                              {categories.map((cat) => {
+                                const Icon = categoryIcons[cat] || Grid;
+                                return (
+                                  <Link
+                                    key={cat}
+                                    href={getCategoryHref(cat)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F0F9FF] transition-all group"
+                                  >
+                                    <div className="w-9 h-9 rounded-lg bg-[#0B1D36]/[0.04] group-hover:bg-[#00A8E8]/10 flex items-center justify-center text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
+                                      <Icon size={17} strokeWidth={1.8} />
+                                    </div>
+                                    <span className="text-sm font-medium text-[#0B1D36] group-hover:text-[#00A8E8]">
+                                      {cat}
+                                    </span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                         <div className="bg-gradient-to-r from-[#0B1D36] to-[#132B4A] px-5 py-3 flex items-center justify-between">
                           <p className="text-sm text-white/80">
@@ -504,24 +535,30 @@ const Navbar = () => {
                 {allCategoriesOpen && (
                   <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[70]">
                     <div className="py-1.5 max-h-80 overflow-y-auto">
-                      {categories.map((cat) => {
-                        const Icon = cat.icon;
-                        return (
-                          <Link
-                            key={cat.name}
-                            href={cat.href}
-                            onClick={() => setAllCategoriesOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#F0F9FF] transition-colors group"
-                          >
-                            <div className="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-[#00A8E8]/10 flex items-center justify-center text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
-                              <Icon size={15} strokeWidth={1.8} />
-                            </div>
-                            <span className="text-sm font-medium text-[#0B1D36] group-hover:text-[#00A8E8]">
-                              {cat.name}
-                            </span>
-                          </Link>
-                        );
-                      })}
+                      {categories.length === 0 ? (
+                        <p className="px-4 py-3 text-sm text-gray-400">
+                          No categories yet
+                        </p>
+                      ) : (
+                        categories.map((cat) => {
+                          const Icon = categoryIcons[cat] || Grid;
+                          return (
+                            <Link
+                              key={cat}
+                              href={getCategoryHref(cat)}
+                              onClick={() => setAllCategoriesOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#F0F9FF] transition-colors group"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-[#00A8E8]/10 flex items-center justify-center text-[#0B1D36] group-hover:text-[#00A8E8] transition-colors">
+                                <Icon size={15} strokeWidth={1.8} />
+                              </div>
+                              <span className="text-sm font-medium text-[#0B1D36] group-hover:text-[#00A8E8]">
+                                {cat}
+                              </span>
+                            </Link>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 )}
@@ -560,9 +597,7 @@ const Navbar = () => {
                 { href: "/wishlist", label: "Wishlist" },
                 { href: "/cart", label: "Cart" },
                 ...(isLoggedIn
-                  ? [
-                      { href: "/account", label: "My Account" },
-                    ]
+                  ? [{ href: "/account", label: "My Account" }]
                   : [{ href: "/login", label: "Log in / Register" }]),
               ].map((link) => (
                 <Link
@@ -608,12 +643,12 @@ const Navbar = () => {
                 <div className="grid grid-cols-2 gap-1">
                   {categories.map((cat) => (
                     <Link
-                      key={cat.name}
-                      href={cat.href}
+                      key={cat}
+                      href={getCategoryHref(cat)}
                       className="px-3 py-2 text-sm text-[#0B1D36] rounded-lg hover:bg-[#F0F9FF] hover:text-[#00A8E8]"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      {cat.name}
+                      {cat}
                     </Link>
                   ))}
                 </div>

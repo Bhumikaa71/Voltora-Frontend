@@ -1,73 +1,58 @@
 import { baseApi } from "./baseApi";
-import { CottonProduct } from "@/types";
-
-export interface UpdateProductArgs {
-  id: string;
-  formData: FormData;
-}
 
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProducts: builder.query<CottonProduct[], string | void>({
-      query: (category) => {
-        if (category && category !== "all") {
-          return `/products?category=${encodeURIComponent(category)}`;
-        }
-        return "/products";
-      },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id, _id }: any) => ({
-                type: "Product" as const,
-                id: id || _id,
-              })),
-              { type: "Product", id: "LIST" },
-            ]
-          : [{ type: "Product", id: "LIST" }],
+    getProducts: builder.query({
+      query: (params = {}) => ({
+        url: "/products",
+        params,
+      }),
+      providesTags: ["Product"],
     }),
 
-    getProductBySlug: builder.query<CottonProduct, string>({
-      query: (slug) => `/products/${encodeURIComponent(slug)}`,
-      providesTags: (result, error, slug) => [{ type: "Product", id: slug }],
+    getProductById: builder.query({
+      query: (id: string) => `/products/${id}`,
+      providesTags: (result, error, id) => [{ type: "Product", id }],
     }),
 
-    addProduct: builder.mutation<CottonProduct, FormData>({
-      query: (formData) => ({
+    getAllProductsAdmin: builder.query({
+      query: () => "/products/admin/all",
+      providesTags: ["Product"],
+    }),
+
+    createProduct: builder.mutation({
+      query: (body) => ({
         url: "/products",
         method: "POST",
-        body: formData,
+        body,
       }),
-      invalidatesTags: [{ type: "Product", id: "LIST" }],
+      invalidatesTags: ["Product"],
     }),
 
-    updateProduct: builder.mutation<CottonProduct, UpdateProductArgs>({
-      query: ({ id, formData }) => ({
+    updateProduct: builder.mutation({
+      query: ({ id, ...body }) => ({
         url: `/products/${id}`,
         method: "PUT",
-        body: formData,
+        body,
       }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Product", id: "LIST" },
-        { type: "Product", id },
-      ],
+      invalidatesTags: ["Product"],
     }),
 
-    deleteProduct: builder.mutation<{ message: string }, string>({
-      query: (id) => ({
+    deleteProduct: builder.mutation({
+      query: (id: string) => ({
         url: `/products/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: [{ type: "Product", id: "LIST" }],
+      invalidatesTags: ["Product"],
     }),
   }),
-  overrideExisting: false,
 });
 
 export const {
   useGetProductsQuery,
-  useGetProductBySlugQuery,
-  useAddProductMutation,
+  useGetProductByIdQuery,
+  useGetAllProductsAdminQuery,
+  useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
 } = productApi;
