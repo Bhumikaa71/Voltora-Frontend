@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/static-components */
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -18,18 +17,6 @@ import ProductCard from "@/components/websitecommon/productcard";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-const categories = [
-  { label: "All", value: "" },
-  { label: "Laptops", value: "Laptops" },
-  { label: "PC & Computers", value: "PC & Computers" },
-  { label: "Cell Phones", value: "Cell Phones" },
-  { label: "Tablets", value: "Tablets" },
-  { label: "Gaming & VR", value: "Gaming & VR" },
-  { label: "Accessories", value: "Accessories" },
-  { label: "Sounds", value: "Sounds" },
-];
-
-const brands = ["Apple", "Samsung", "Sony", "Dell", "Anker", "Logitech"];
 const ratingOptions = [4.5, 4, 3.5, 3];
 const ITEMS_PER_PAGE = 6;
 
@@ -45,6 +32,10 @@ export default function ProductsListing({
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Dynamic filters
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedBrand, setSelectedBrand] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState("");
@@ -56,14 +47,35 @@ export default function ProductsListing({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch products from backend
+  // Fetch products + categories
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/api/products`);
-        const data = await res.json();
-        setProducts(Array.isArray(data) ? data : []);
+
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetch(`${API_URL}/api/products`),
+          fetch(`${API_URL}/api/products/categories`),
+        ]);
+
+        const productsData = await productsRes.json();
+        const categoriesData = await categoriesRes.json();
+
+        const productsList = Array.isArray(productsData) ? productsData : [];
+        setProducts(productsList);
+        setAvailableCategories(
+          Array.isArray(categoriesData) ? categoriesData : []
+        );
+
+        // Extract unique brands from products
+        const brands = [
+          ...new Set(
+            productsList
+              .map((p: any) => p.brand)
+              .filter((b: string) => b && b.trim() !== "")
+          ),
+        ].sort();
+        setAvailableBrands(brands);
       } catch (err) {
         console.error("Failed to fetch products:", err);
         setProducts([]);
@@ -71,7 +83,8 @@ export default function ProductsListing({
         setLoading(false);
       }
     };
-    fetchProducts();
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -84,7 +97,8 @@ export default function ProductsListing({
 
     if (selectedCategory) {
       result = result.filter(
-        (p) => p.category?.toLowerCase() === selectedCategory.toLowerCase()
+        (p) =>
+          p.category?.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
     if (selectedBrand.length > 0) {
@@ -208,23 +222,33 @@ export default function ProductsListing({
         )}
       </div>
 
-      {/* Category */}
+      {/* Category - DYNAMIC */}
       <div>
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
           Category
         </p>
         <div className="space-y-0.5">
-          {categories.map((cat) => (
+          <button
+            onClick={() => handleCategoryChange("")}
+            className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-all ${
+              selectedCategory === ""
+                ? "bg-[#0B1D36] text-white font-medium"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            All
+          </button>
+          {availableCategories.map((cat) => (
             <button
-              key={cat.value}
-              onClick={() => handleCategoryChange(cat.value)}
+              key={cat}
+              onClick={() => handleCategoryChange(cat)}
               className={`w-full text-left px-3 py-2 rounded-lg text-[13px] transition-all ${
-                selectedCategory === cat.value
+                selectedCategory === cat
                   ? "bg-[#0B1D36] text-white font-medium"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              {cat.label}
+              {cat}
             </button>
           ))}
         </div>
@@ -254,25 +278,30 @@ export default function ProductsListing({
         </div>
       </div>
 
-      {/* Brand */}
-      <div>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
-          Brand
-        </p>
-        <div className="space-y-2">
-          {brands.map((brand) => (
-            <label key={brand} className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedBrand.includes(brand)}
-                onChange={() => toggleBrand(brand)}
-                className="w-4 h-4 rounded border-gray-300 text-[#00A8E8] focus:ring-[#00A8E8]"
-              />
-              <span className="text-[13px] text-gray-600">{brand}</span>
-            </label>
-          ))}
+      {/* Brand - DYNAMIC */}
+      {availableBrands.length > 0 && (
+        <div>
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
+            Brand
+          </p>
+          <div className="space-y-2">
+            {availableBrands.map((brand) => (
+              <label
+                key={brand}
+                className="flex items-center gap-2.5 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedBrand.includes(brand)}
+                  onChange={() => toggleBrand(brand)}
+                  className="w-4 h-4 rounded border-gray-300 text-[#00A8E8] focus:ring-[#00A8E8]"
+                />
+                <span className="text-[13px] text-gray-600">{brand}</span>
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Rating */}
       <div>
@@ -433,7 +462,7 @@ export default function ProductsListing({
                   ))}
                 </div>
 
-                <div className="flex bg-[#0B1D36] rounded-xl p-1 shadow-sm">
+                <div className="flex bg-white rounded-xl p-1 border border-gray-100 shadow-sm">
                   <button
                     onClick={() => setViewMode("grid")}
                     className={`p-2 rounded-lg transition-all ${
