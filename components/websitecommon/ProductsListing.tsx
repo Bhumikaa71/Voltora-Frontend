@@ -63,18 +63,20 @@ export default function ProductsListing({
 
         const productsList = Array.isArray(productsData) ? productsData : [];
         setProducts(productsList);
+
         setAvailableCategories(
           Array.isArray(categoriesData) ? categoriesData : []
         );
 
-        // Extract unique brands from products
+        // Extract unique brands
         const brands = [
           ...new Set(
             productsList
               .map((p: any) => p.brand)
               .filter((b: string) => b && b.trim() !== "")
           ),
-        ].sort();
+        ].sort() as string[];
+
         setAvailableBrands(brands);
       } catch (err) {
         console.error("Failed to fetch products:", err);
@@ -92,33 +94,50 @@ export default function ProductsListing({
     setCurrentPage(1);
   }, [initialCategory]);
 
+  // ========== FILTERING ==========
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
+    // Category
     if (selectedCategory) {
       result = result.filter(
         (p) =>
-          p.category?.toLowerCase() === selectedCategory.toLowerCase()
+          p.category?.toLowerCase().trim() ===
+          selectedCategory.toLowerCase().trim()
       );
     }
+
+    // Brand
     if (selectedBrand.length > 0) {
-      result = result.filter((p) => selectedBrand.includes(p.brand));
+      result = result.filter((p) =>
+        selectedBrand.some(
+          (b) =>
+            b.toLowerCase().trim() === (p.brand || "").toLowerCase().trim()
+        )
+      );
     }
 
+    // Price
     const min = minPrice ? Number(minPrice) : 0;
     const max = maxPrice ? Number(maxPrice) : Infinity;
     result = result.filter((p) => p.price >= min && p.price <= max);
 
+    // Rating
     if (selectedRating) {
       result = result.filter((p) => (p.rating || 0) >= selectedRating);
     }
+
+    // Availability
     if (selectedStock === "in-stock") {
-      result = result.filter((p) => p.stock !== "Out of Stock");
+      result = result.filter(
+        (p) => p.stock === "In Stock" || p.stock === "Low Stock"
+      );
     }
     if (selectedStock === "out-of-stock") {
       result = result.filter((p) => p.stock === "Out of Stock");
     }
 
+    // Sort
     switch (sortBy) {
       case "price-low":
         result.sort((a, b) => a.price - b.price);
@@ -170,13 +189,18 @@ export default function ProductsListing({
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
-    if (value) router.push(`/products?category=${encodeURIComponent(value)}`);
-    else router.push("/products");
+    if (value) {
+      router.push(`/products?category=${encodeURIComponent(value)}`);
+    } else {
+      router.push("/products");
+    }
   };
 
   const toggleBrand = (brand: string) => {
     setSelectedBrand((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+      prev.includes(brand)
+        ? prev.filter((b) => b !== brand)
+        : [...prev, brand]
     );
   };
 
@@ -535,7 +559,9 @@ export default function ProductsListing({
                 {totalPages > 1 && (
                   <div className="mt-10 flex items-center justify-center gap-1.5">
                     <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      onClick={() =>
+                        setCurrentPage((p) => Math.max(1, p - 1))
+                      }
                       disabled={currentPage === 1}
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-500 hover:bg-white disabled:opacity-30 transition-all"
                     >
