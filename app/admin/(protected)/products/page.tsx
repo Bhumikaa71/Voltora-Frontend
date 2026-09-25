@@ -30,6 +30,7 @@ interface Product {
   freeShipping?: boolean;
   freeGift?: boolean;
   isActive?: boolean;
+  dealEndsAt?: string | null;
 }
 
 const MAX_IMAGES = 5;
@@ -54,19 +55,17 @@ export default function AdminProductsPage() {
     description: "",
     freeShipping: false,
     freeGift: false,
+    dealEndsAt: "", // NEW
   });
 
-  // Fetch products + categories
   const fetchData = async () => {
     try {
       const [productsRes, categoriesRes] = await Promise.all([
         fetch(`${API_URL}/api/products/admin/all`),
         fetch(`${API_URL}/api/products/categories`),
       ]);
-
       const productsData = await productsRes.json();
       const categoriesData = await categoriesRes.json();
-
       setProducts(Array.isArray(productsData) ? productsData : []);
       setExistingCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (err) {
@@ -75,7 +74,6 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
@@ -99,6 +97,7 @@ export default function AdminProductsPage() {
       description: "",
       freeShipping: false,
       freeGift: false,
+      dealEndsAt: "",
     });
     setShowModal(true);
   };
@@ -116,6 +115,10 @@ export default function AdminProductsPage() {
       description: product.description || "",
       freeShipping: product.freeShipping || false,
       freeGift: product.freeGift || false,
+      // datetime-local needs "YYYY-MM-DDTHH:mm"
+      dealEndsAt: product.dealEndsAt
+        ? new Date(product.dealEndsAt).toISOString().slice(0, 16)
+        : "",
     });
     setShowModal(true);
   };
@@ -154,7 +157,6 @@ export default function AdminProductsPage() {
       setLoading(false);
       return;
     }
-
     if (!form.category.trim()) {
       alert("Please enter a category");
       setLoading(false);
@@ -172,6 +174,9 @@ export default function AdminProductsPage() {
       description: form.description,
       freeShipping: form.freeShipping,
       freeGift: form.freeGift,
+      dealEndsAt: form.dealEndsAt
+        ? new Date(form.dealEndsAt).toISOString()
+        : null,
     };
 
     try {
@@ -192,7 +197,7 @@ export default function AdminProductsPage() {
       }
 
       setShowModal(false);
-      fetchData(); // refresh products + categories
+      fetchData();
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -214,7 +219,6 @@ export default function AdminProductsPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Products</h2>
@@ -231,7 +235,6 @@ export default function AdminProductsPage() {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-5 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search
@@ -243,7 +246,7 @@ export default function AdminProductsPage() {
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] focus:ring-2 focus:ring-[#00A8E8]/15 text-slate-700"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
           />
         </div>
         <div className="relative">
@@ -266,7 +269,6 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -285,7 +287,7 @@ export default function AdminProductsPage() {
                   Stock
                 </th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">
-                  Images
+                  Deal ends
                 </th>
                 <th className="text-right px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Actions
@@ -304,7 +306,7 @@ export default function AdminProductsPage() {
                 filtered.map((product) => (
                   <tr
                     key={product._id}
-                    className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors"
+                    className="border-b border-slate-50 hover:bg-slate-50/50"
                   >
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -327,8 +329,8 @@ export default function AdminProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 hidden md:table-cell">
-                      <span className="text-slate-500">{product.category}</span>
+                    <td className="px-5 py-4 hidden md:table-cell text-slate-500">
+                      {product.category}
                     </td>
                     <td className="px-5 py-4">
                       <p className="font-semibold text-slate-800">
@@ -349,40 +351,22 @@ export default function AdminProductsPage() {
                         {product.stock}
                       </span>
                     </td>
-                    <td className="px-5 py-4 hidden lg:table-cell">
-                      <div className="flex items-center -space-x-2">
-                        {product.images.slice(0, 4).map((img, i) => (
-                          <div
-                            key={i}
-                            className="relative w-8 h-8 rounded-lg border-2 border-white bg-slate-50 overflow-hidden"
-                          >
-                            <Image
-                              src={img}
-                              alt=""
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
-                          </div>
-                        ))}
-                        {product.images.length > 4 && (
-                          <span className="text-[10px] text-slate-400 ml-2 pl-1">
-                            +{product.images.length - 4}
-                          </span>
-                        )}
-                      </div>
+                    <td className="px-5 py-4 hidden lg:table-cell text-xs text-slate-500">
+                      {product.dealEndsAt
+                        ? new Date(product.dealEndsAt).toLocaleString()
+                        : "—"}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openEdit(product)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-[#00A8E8] transition-colors"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-blue-50 hover:text-[#00A8E8]"
                         >
                           <Pencil size={15} />
                         </button>
                         <button
                           onClick={() => handleDelete(product._id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
                         >
                           <Trash2 size={15} />
                         </button>
@@ -396,7 +380,6 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
@@ -417,7 +400,6 @@ export default function AdminProductsPage() {
             </div>
 
             <form onSubmit={handleSave} className="p-6 space-y-4">
-              {/* Product Name */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Product name *
@@ -433,7 +415,6 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              {/* Price */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -466,7 +447,24 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Category + Stock */}
+              {/* NEW – Deal ends at */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Deal ends at (optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={form.dealEndsAt}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, dealEndsAt: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Shows countdown on “Deals of the Day” when old price is set
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -488,11 +486,7 @@ export default function AdminProductsPage() {
                       <option key={c} value={c} />
                     ))}
                   </datalist>
-                  <p className="text-xs text-slate-400 mt-1">
-                    You can type a new category
-                  </p>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Stock
@@ -514,7 +508,6 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Brand */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Brand
@@ -529,7 +522,6 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Description
@@ -544,7 +536,6 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              {/* Images */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-slate-700">
@@ -562,9 +553,7 @@ export default function AdminProductsPage() {
                         value={url}
                         onChange={(e) => updateImage(index, e.target.value)}
                         placeholder={
-                          index === 0
-                            ? "Main image URL *"
-                            : "Sub image URL"
+                          index === 0 ? "Main image URL *" : "Sub image URL"
                         }
                         className="flex-1 px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                       />
@@ -603,7 +592,6 @@ export default function AdminProductsPage() {
                 )}
               </div>
 
-              {/* Free Shipping / Gift */}
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-sm text-slate-700">
                   <input
@@ -630,7 +618,6 @@ export default function AdminProductsPage() {
                 </label>
               </div>
 
-              {/* Buttons */}
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
