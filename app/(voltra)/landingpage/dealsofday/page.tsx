@@ -10,8 +10,6 @@ import {
   Star,
   ArrowRight,
   CheckCircle2,
-  Flame,
-  Zap,
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -84,8 +82,8 @@ const DealsOfTheDay = () => {
         const res = await fetch(`${API_URL}/api/products/deals`);
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
-        // ONLY 4 deals on landing page
-        const list = Array.isArray(data) ? data.slice(0, 4) : [];
+        // Only 4 deals on landing page
+        const list = Array.isArray(data) ? data.slice(0, 5) : [];
         setDeals(list);
         if (list.length > 0) setActiveDeal(list[0]);
       } catch (err) {
@@ -100,6 +98,7 @@ const DealsOfTheDay = () => {
 
   useEffect(() => {
     if (!activeDeal?.dealEndsAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
       return;
     }
@@ -110,14 +109,15 @@ const DealsOfTheDay = () => {
   }, [activeDeal]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedImage(0);
   }, [activeDeal]);
 
   if (loading) {
     return (
-      <section className="py-14 bg-gradient-to-b from-white to-[#F0F7FF]">
-        <div className="max-w-7xl mx-auto px-4 h-72 flex items-center justify-center">
-          <div className="w-10 h-10 border-[3px] border-[#00A8E8] border-t-transparent rounded-full animate-spin" />
+      <section className="py-12 lg:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-[#00A8E8] border-t-transparent rounded-full animate-spin" />
         </div>
       </section>
     );
@@ -155,50 +155,39 @@ const DealsOfTheDay = () => {
   const sold = 32;
   const total = 75;
   const progress = Math.round((sold / total) * 100);
-
-  // Side = remaining of the 4 (max 3)
-  const sideDeals = deals.filter((d) => d._id !== activeDeal._id).slice(0, 3);
+  const sideDeals = deals.filter((d) => d._id !== activeDeal._id).slice(0, 4);
 
   return (
-    <section className="py-12 lg:py-16 bg-gradient-to-b from-white via-[#F8FBFF] to-[#F0F7FF]">
+    <section className="py-12 lg:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        {/* Header – same style as New Arrivals */}
+        <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A8E8] to-[#00C2F0] flex items-center justify-center shadow-lg shadow-[#00A8E8]/25">
-              <Flame size={20} className="text-white" />
-            </div>
+            <span className="w-2 h-8 rounded-full bg-[#00A8E8]" />
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#0B1D36]">
+              <h2 className="text-2xl lg:text-3xl font-bold text-[#0B1D36]">
                 Deals of the Day
               </h2>
-              <p className="text-sm text-slate-400 mt-0.5">
+              <p className="text-sm text-gray-500 mt-1">
                 Limited time offers — grab them before they’re gone
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {!timeLeft.expired && activeDeal.dealEndsAt && (
-              <div className="hidden md:flex items-center gap-2 bg-white border border-slate-100 rounded-full px-4 py-2 shadow-sm">
-                <Zap size={14} className="text-[#00A8E8]" />
-                <span className="text-xs font-medium text-slate-500">
-                  Ends in {String(timeLeft.hours).padStart(2, "0")}:
-                  {String(timeLeft.minutes).padStart(2, "0")}:
-                  {String(timeLeft.seconds).padStart(2, "0")}
-                </span>
-              </div>
-            )}
-            <Link
-              href="/deals"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#0B1D36] hover:bg-[#00A8E8] px-5 py-2.5 rounded-full transition-all shadow-md"
-            >
-              View all
-              <ArrowRight size={14} />
-            </Link>
-          </div>
+
+          <Link
+            href="/deals"
+            className="hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-[#00A8E8] hover:text-[#0B1D36] transition-colors group"
+          >
+            View All
+            <ArrowRight
+              size={16}
+              className="group-hover:translate-x-1 transition-transform"
+            />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Featured */}
+          {/* Featured deal */}
           <div className="xl:col-span-8 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
             <div className="flex flex-col lg:flex-row">
               <div className="lg:w-[44%] relative bg-gradient-to-br from-slate-50 to-slate-100 p-6 lg:p-8">
@@ -359,7 +348,7 @@ const DealsOfTheDay = () => {
             </div>
           </div>
 
-          {/* Side – up to 3 more (total 4) */}
+          {/* Side deals (max 3 → total 4) */}
           <div className="xl:col-span-4 flex flex-col gap-3.5">
             {sideDeals.map((deal) => {
               const disc =
@@ -370,6 +359,7 @@ const DealsOfTheDay = () => {
                   : 0;
               const img =
                 deal.images?.[0] || "https://via.placeholder.com/300";
+
               return (
                 <button
                   key={deal._id}
@@ -410,6 +400,17 @@ const DealsOfTheDay = () => {
               );
             })}
           </div>
+        </div>
+
+        {/* Mobile View All */}
+        <div className="mt-8 text-center sm:hidden">
+          <Link
+            href="/deals"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#00A8E8]"
+          >
+            View All Deals
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </div>
     </section>
