@@ -10,6 +10,7 @@ import DealsOfTheDay from './landingpage/dealsofday/page'
 import FeatureBrand from './landingpage/featuredbrand/page'
 import TopCellphonesTablets from './landingpage/topcellphonestablets/page'
 import TopLaptop from './landingpage/toplaptop/page'
+import NewArrivals from './landingpage/newarrivals.tsx/page'
 
 function page() {
   return (
@@ -19,10 +20,11 @@ function page() {
       <FeatureBrand />
       <DealsOfTheDay />
       <Banner />
-      <BestSellers />
+      <NewArrivals />
       <TopCellphonesTablets />
       <CellPhone />
       <TopLaptop />
+      <BestSellers />
       <Laptop />
       <Accessories />
       </div>

@@ -31,6 +31,8 @@ interface Product {
   freeGift?: boolean;
   isActive?: boolean;
   dealEndsAt?: string | null;
+  isBestSeller?: boolean;
+  isNewArrival?: boolean;
 }
 
 const MAX_IMAGES = 5;
@@ -55,7 +57,9 @@ export default function AdminProductsPage() {
     description: "",
     freeShipping: false,
     freeGift: false,
-    dealEndsAt: "", // NEW
+    dealEndsAt: "",
+    isBestSeller: false,
+    isNewArrival: false,
   });
 
   const fetchData = async () => {
@@ -98,6 +102,8 @@ export default function AdminProductsPage() {
       freeShipping: false,
       freeGift: false,
       dealEndsAt: "",
+      isBestSeller: false,
+      isNewArrival: false,
     });
     setShowModal(true);
   };
@@ -115,10 +121,11 @@ export default function AdminProductsPage() {
       description: product.description || "",
       freeShipping: product.freeShipping || false,
       freeGift: product.freeGift || false,
-      // datetime-local needs "YYYY-MM-DDTHH:mm"
       dealEndsAt: product.dealEndsAt
         ? new Date(product.dealEndsAt).toISOString().slice(0, 16)
         : "",
+      isBestSeller: product.isBestSeller || false,
+      isNewArrival: product.isNewArrival || false,
     });
     setShowModal(true);
   };
@@ -177,6 +184,8 @@ export default function AdminProductsPage() {
       dealEndsAt: form.dealEndsAt
         ? new Date(form.dealEndsAt).toISOString()
         : null,
+      isBestSeller: form.isBestSeller,
+      isNewArrival: form.isNewArrival,
     };
 
     try {
@@ -287,7 +296,7 @@ export default function AdminProductsPage() {
                   Stock
                 </th>
                 <th className="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">
-                  Deal ends
+                  Flags
                 </th>
                 <th className="text-right px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Actions
@@ -351,10 +360,22 @@ export default function AdminProductsPage() {
                         {product.stock}
                       </span>
                     </td>
-                    <td className="px-5 py-4 hidden lg:table-cell text-xs text-slate-500">
-                      {product.dealEndsAt
-                        ? new Date(product.dealEndsAt).toLocaleString()
-                        : "—"}
+                    <td className="px-5 py-4 hidden lg:table-cell">
+                      <div className="flex flex-wrap gap-1">
+                        {product.isBestSeller && (
+                          <span className="text-[10px] font-semibold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+                            Best Seller
+                          </span>
+                        )}
+                        {product.isNewArrival && (
+                          <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                            New
+                          </span>
+                        )}
+                        {!product.isBestSeller && !product.isNewArrival && (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1">
@@ -447,7 +468,6 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* NEW – Deal ends at */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Deal ends at (optional)
@@ -460,9 +480,6 @@ export default function AdminProductsPage() {
                   }
                   className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                 />
-                <p className="text-xs text-slate-400 mt-1">
-                  Shows countdown on “Deals of the Day” when old price is set
-                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -478,7 +495,7 @@ export default function AdminProductsPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, category: e.target.value }))
                     }
-                    placeholder="Type or select category"
+                    placeholder="Type or select"
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                   />
                   <datalist id="category-list">
@@ -539,7 +556,7 @@ export default function AdminProductsPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-slate-700">
-                    Images (1 main + up to 4)
+                    Images
                   </label>
                   <span className="text-xs text-slate-400">
                     {form.images.length}/{MAX_IMAGES}
@@ -572,7 +589,7 @@ export default function AdminProductsPage() {
                         <button
                           type="button"
                           onClick={() => removeImageField(index)}
-                          className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                          className="w-11 h-11 flex items-center justify-center rounded-xl border text-slate-400 hover:bg-red-50 hover:text-red-500"
                         >
                           <X size={16} />
                         </button>
@@ -592,8 +609,9 @@ export default function AdminProductsPage() {
                 )}
               </div>
 
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm text-slate-700">
+              {/* Flags */}
+              <div className="flex flex-wrap gap-4 pt-1">
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.freeShipping}
@@ -606,7 +624,7 @@ export default function AdminProductsPage() {
                   />
                   Free Shipping
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700">
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={form.freeGift}
@@ -615,6 +633,32 @@ export default function AdminProductsPage() {
                     }
                   />
                   Free Gift
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isBestSeller}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        isBestSeller: e.target.checked,
+                      }))
+                    }
+                  />
+                  Best Seller
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isNewArrival}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        isNewArrival: e.target.checked,
+                      }))
+                    }
+                  />
+                  New Arrival
                 </label>
               </div>
 

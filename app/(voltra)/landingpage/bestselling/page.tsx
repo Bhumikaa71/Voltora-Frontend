@@ -1,70 +1,48 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/websitecommon/productcard";
 
-const bestSellers = [
-  {
-    id: 1,
-    title: "Apple MagSafe Battery Pack",
-    price: 99.99,
-    oldPrice: 129.99,
-    rating: 4.6,
-    reviews: 128,
-    image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600&q=80",
-    badge: "Best Seller",
-    stock: "Low Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-  },
-  {
-    id: 2,
-    title: "Sony WH-1000XM5 Wireless Headphones",
-    price: 348.0,   
-    oldPrice: 399.99,
-    rating: 4.8,
-    reviews: 312,
-    image: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&q=80",
-    badge: "Top Rated",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-  },
-  {
-    id: 3,
-    title: "Samsung Galaxy Buds3 Pro",
-    price: 199.99,
-    oldPrice: 249.99,
-    rating: 4.5,
-    reviews: 89,
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&q=80",
-    badge: "New",
-    stock: "In Stock" as const,
-    freeShipping: true,
-    freeGift: true,
-  },
-  {
-    id: 4,
-    title: "Anker 737 Power Bank 24000mAh",
-    price: 119.99,
-    oldPrice: 149.99,
-    rating: 4.7,
-    reviews: 205,
-    image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=600&q=80",
-    badge: "Hot",
-    stock: "Low Stock" as const,
-    freeShipping: true,
-    freeGift: false,
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const BestSellers = () => {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/products?bestSeller=true`);
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setProducts(Array.isArray(data) ? data.slice(0, 8) : []);
+      } catch (err) {
+        console.error(err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBestSellers();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-12 lg:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-4 border-[#00A8E8] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) return null;
+
   return (
     <section className="py-12 lg:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <span className="w-2 h-8 rounded-full bg-[#00A8E8]" />
@@ -77,9 +55,8 @@ const BestSellers = () => {
               </p>
             </div>
           </div>
-
           <Link
-            href="/products?sort=best-selling"
+            href="/products?bestSeller=true"
             className="hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-[#00A8E8] hover:text-[#0B1D36] transition-colors group"
           >
             View All
@@ -90,30 +67,28 @@ const BestSellers = () => {
           </Link>
         </div>
 
-        {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
-          {bestSellers.map((product) => (
+          {products.map((product) => (
             <ProductCard
-              key={product.id}
-              id={product.id}
+              key={product._id}
+              id={product._id}
               title={product.title}
               price={product.price}
               oldPrice={product.oldPrice}
-              rating={product.rating}
-              reviews={product.reviews}
-              image={product.image}
-              badge={product.badge}
-              stock={product.stock}
+              rating={product.rating || 4.5}
+              reviews={product.reviews || 0}
+              image={product.images?.[0] || ""}
+              badge="Best Seller"
+              stock={product.stock || "In Stock"}
               freeShipping={product.freeShipping}
               freeGift={product.freeGift}
             />
           ))}
         </div>
 
-        {/* Mobile View All */}
         <div className="mt-8 text-center sm:hidden">
           <Link
-            href="/products?sort=best-selling"
+            href="/products?bestSeller=true"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#00A8E8]"
           >
             View All Best Sellers
