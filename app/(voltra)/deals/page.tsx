@@ -7,31 +7,40 @@ import ProductCard from "@/components/websitecommon/productcard";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-function CountdownTimer() {
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 14,
-    minutes: 32,
-    seconds: 45,
-  });
+function getTimeLeft(endsAt: string | Date | null | undefined) {
+  if (!endsAt) {
+    return { hours: 0, minutes: 0, seconds: 0, expired: true };
+  }
+  const end = new Date(endsAt).getTime();
+  const diff = Math.max(0, end - Date.now());
+  if (diff === 0) {
+    return { hours: 0, minutes: 0, seconds: 0, expired: true };
+  }
+  const totalHours = Math.floor(diff / (1000 * 60 * 60));
+  return {
+    hours: totalHours,
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+    expired: false,
+  };
+}
+
+function CountdownTimer({ endsAt }: { endsAt?: string | null }) {
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft(endsAt));
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        let { hours, minutes, seconds } = prev;
-        if (seconds > 0) seconds--;
-        else if (minutes > 0) {
-          minutes--;
-          seconds = 59;
-        } else if (hours > 0) {
-          hours--;
-          minutes = 59;
-          seconds = 59;
-        }
-        return { hours, minutes, seconds };
-      });
-    }, 1000);
+    if (!endsAt) return;
+    const tick = () => setTimeLeft(getTimeLeft(endsAt));
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [endsAt]);
+
+  if (!endsAt || timeLeft.expired) {
+    return (
+      <span className="text-sm text-white/60">Limited time offers</span>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1.5">
@@ -52,7 +61,6 @@ function CountdownTimer() {
 }
 
 export default function DealsPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("discount");
@@ -64,6 +72,7 @@ export default function DealsPage() {
         const res = await fetch(`${API_URL}/api/products/deals`);
         if (!res.ok) throw new Error("Failed to fetch deals");
         const data = await res.json();
+        // ALL deals – no slice
         setDeals(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
@@ -74,6 +83,18 @@ export default function DealsPage() {
     };
     fetchDeals();
   }, []);
+
+  // Nearest deal end time for header countdown
+  const nearestEndsAt = useMemo(() => {
+    const dates = deals
+      .map((d) => d.dealEndsAt)
+      .filter(Boolean)
+      .map((d) => new Date(d).getTime())
+      // eslint-disable-next-line react-hooks/purity
+      .filter((t) => t > Date.now())
+      .sort((a, b) => a - b);
+    return dates.length ? new Date(dates[0]).toISOString() : null;
+  }, [deals]);
 
   const sortedDeals = useMemo(() => {
     const list = [...deals];
@@ -110,7 +131,6 @@ export default function DealsPage() {
 
   return (
     <div className="bg-[#F4F6F9] min-h-screen pb-16">
-      {/* Header */}
       <div className="bg-gradient-to-r from-[#0B1D36] via-[#0E2544] to-[#132B4A] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <nav className="flex items-center gap-2 text-sm text-white/50 mb-6">
@@ -138,14 +158,13 @@ export default function DealsPage() {
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
               <Clock size={16} className="text-[#00A8E8]" />
               <span className="text-sm text-white/70">Ends in</span>
-              <CountdownTimer />
+              <CountdownTimer endsAt={nearestEndsAt} />
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
-        {/* Toolbar */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <p className="text-sm text-gray-500">
             <span className="font-semibold text-[#0B1D36]">
@@ -168,7 +187,6 @@ export default function DealsPage() {
           </div>
         </div>
 
-        {/* Deals List */}
         {sortedDeals.length === 0 ? (
           <div className="bg-white rounded-2xl py-20 text-center border border-gray-100">
             <p className="text-[#0B1D36] font-semibold text-lg">

@@ -84,7 +84,8 @@ const DealsOfTheDay = () => {
         const res = await fetch(`${API_URL}/api/products/deals`);
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
-        const list = Array.isArray(data) ? data.slice(0, 8) : [];
+        // ONLY 4 deals on landing page
+        const list = Array.isArray(data) ? data.slice(0, 4) : [];
         setDeals(list);
         if (list.length > 0) setActiveDeal(list[0]);
       } catch (err) {
@@ -97,7 +98,6 @@ const DealsOfTheDay = () => {
     fetchDeals();
   }, []);
 
-  // Live countdown from activeDeal.dealEndsAt
   useEffect(() => {
     if (!activeDeal?.dealEndsAt) {
       setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
@@ -155,7 +155,9 @@ const DealsOfTheDay = () => {
   const sold = 32;
   const total = 75;
   const progress = Math.round((sold / total) * 100);
-  const sideDeals = deals.filter((d) => d._id !== activeDeal._id).slice(0, 5);
+
+  // Side = remaining of the 4 (max 3)
+  const sideDeals = deals.filter((d) => d._id !== activeDeal._id).slice(0, 3);
 
   return (
     <section className="py-12 lg:py-16 bg-gradient-to-b from-white via-[#F8FBFF] to-[#F0F7FF]">
@@ -196,6 +198,7 @@ const DealsOfTheDay = () => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          {/* Featured */}
           <div className="xl:col-span-8 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
             <div className="flex flex-col lg:flex-row">
               <div className="lg:w-[44%] relative bg-gradient-to-br from-slate-50 to-slate-100 p-6 lg:p-8">
@@ -356,7 +359,8 @@ const DealsOfTheDay = () => {
             </div>
           </div>
 
-          <div className="xl:col-span-4 flex flex-col gap-3.5 max-h-[620px] overflow-y-auto pr-1">
+          {/* Side – up to 3 more (total 4) */}
+          <div className="xl:col-span-4 flex flex-col gap-3.5">
             {sideDeals.map((deal) => {
               const disc =
                 deal.oldPrice && deal.oldPrice > deal.price
