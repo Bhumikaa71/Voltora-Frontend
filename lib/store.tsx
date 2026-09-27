@@ -1,187 +1,283 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export interface CartItem {
-  id: number | string;
+  id: string;
   title: string;
   price: number;
   oldPrice?: number;
   image: string;
-  quantity: number;
   stock?: string;
+  quantity: number;
 }
 
 export interface WishlistItem {
-  id: number | string;
+  id: string;
   title: string;
   price: number;
   oldPrice?: number;
-  rating?: number;
-  reviews?: number;
   image: string;
   stock?: string;
+  rating?: number;
+  reviews?: number;
 }
 
 export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
 }
 
-const DUMMY_USER = {
-  id: "1",
-  name: "Bhumika Bista",
-  email: "baumabista@gmail.com",
-  password: "bhumika123",
-};
-
-interface StoreContextType {
+interface Store {
   cart: CartItem[];
   wishlist: WishlistItem[];
-  addToCart: (item: Omit<CartItem, "quantity">, qty?: number) => void;
-  removeFromCart: (id: number | string) => void;
-  updateQuantity: (id: number | string, quantity: number) => void;
-  clearCart: () => void;
-  addToWishlist: (item: WishlistItem) => void;
-  removeFromWishlist: (id: number | string) => void;
-  isInWishlist: (id: number | string) => boolean;
+  user: User | null;
+  token: string | null;
+  isLoggedIn: boolean;
   cartCount: number;
   wishlistCount: number;
-  // Auth
-  user: User | null;
-  login: (email: string, password: string) => { ok: boolean; error?: string };
+
+  setAuth: (token: string, user: User) => void;
   logout: () => void;
-  isLoggedIn: boolean;
+  setUser: (user: User) => void;
+
+  addToCart: (
+    item: Omit<CartItem, "quantity"> & { quantity?: number }
+  ) => Promise<void>;
+  removeFromCart: (id: string) => Promise<void>;
+  updateQuantity: (id: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
+  syncCartFromServer: () => Promise<void>;
+
+  isInWishlist: (id: string | number) => boolean;
+  addToWishlist: (item: WishlistItem) => Promise<void>;
+  removeFromWishlist: (id: string | number) => Promise<void>;
+  syncWishlistFromServer: () => Promise<void>;
 }
 
-const StoreContext = createContext<StoreContextType | null>(null);
-
-export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-  const [user, setUser] = useState<User | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem("voltora_cart");
-      const savedWishlist = localStorage.getItem("voltora_wishlist");
-      const savedUser = localStorage.getItem("voltora_user");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (savedCart) setCart(JSON.parse(savedCart));
-      if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-      if (savedUser) setUser(JSON.parse(savedUser));
-    } catch {}
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!loaded) return;
-    localStorage.setItem("voltora_cart", JSON.stringify(cart));
-  }, [cart, loaded]);
-
-  useEffect(() => {
-    if (!loaded) return;
-    localStorage.setItem("voltora_wishlist", JSON.stringify(wishlist));
-  }, [wishlist, loaded]);
-
-  useEffect(() => {
-    if (!loaded) return;
-    if (user) {
-      localStorage.setItem("voltora_user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("voltora_user");
-    }
-  }, [user, loaded]);
-
-  const addToCart = (item: Omit<CartItem, "quantity">, qty = 1) => {
-    setCart((prev) => {
-      const existing = prev.find((p) => p.id === item.id);
-      if (existing) {
-        return prev.map((p) =>
-          p.id === item.id ? { ...p, quantity: p.quantity + qty } : p
-        );
+function authHeaders(token: string | null) {
+  return token
+    ? {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       }
-      return [...prev, { ...item, quantity: qty }];
-    });
-  };
+    : { "Content-Type": "application/json" };
+}
 
-  const removeFromCart = (id: number | string) => {
-    setCart((prev) => prev.filter((p) => p.id !== id));
-  };
+export const useStore = create<Store>()(
+  persist(
+    (set, get) => ({
+      cart: [],
+      wishlist: [],
+      user: null,
+      token: null,
+      isLoggedIn: false,
+      cartCount: 0,
+      wishlistCount: 0,
 
-  const updateQuantity = (id: number | string, quantity: number) => {
-    if (quantity < 1) return;
-    setCart((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, quantity } : p))
-    );
-  };
+      setAuth: (token, user) => {
+        set({ token, user, isLoggedIn: true });
+        if (typeof window !== "undefined") {
+          localStorage.setItem("userToken", token);
+        }
+        get().syncCartFromServer();
+        get().syncWishlistFromServer();
+      },
 
-  const clearCart = () => setCart([]);
+      logout: () => {
+        set({
+          token: null,
+          user: null,
+          isLoggedIn: false,
+          cart: [],
+          wishlist: [],
+          cartCount: 0,
+          wishlistCount: 0,
+        });
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("userToken");
+        }
+      },
 
-  const addToWishlist = (item: WishlistItem) => {
-    setWishlist((prev) => {
-      if (prev.find((p) => p.id === item.id)) return prev;
-      return [...prev, item];
-    });
-  };
+      setUser: (user) => set({ user }),
 
-  const removeFromWishlist = (id: number | string) => {
-    setWishlist((prev) => prev.filter((p) => p.id !== id));
-  };
+      addToCart: async (item) => {
+        const { token, cart } = get();
+        const id = String(item.id);
+        const qty = item.quantity || 1;
+        const existing = cart.find((c) => c.id === id);
+        let next: CartItem[];
 
-  const isInWishlist = (id: number | string) =>
-    wishlist.some((p) => p.id === id);
+        if (existing) {
+          next = cart.map((c) =>
+            c.id === id ? { ...c, quantity: c.quantity + qty } : c
+          );
+        } else {
+          next = [...cart, { ...item, id, quantity: qty }];
+        }
+        set({
+          cart: next,
+          cartCount: next.reduce((s, i) => s + i.quantity, 0),
+        });
 
-  // ✅ This is the missing function
-  const login = (email: string, password: string) => {
-    if (
-      email.toLowerCase().trim() === DUMMY_USER.email &&
-      password === DUMMY_USER.password
-    ) {
-      setUser({
-        id: DUMMY_USER.id,
-        name: DUMMY_USER.name,
-        email: DUMMY_USER.email,
-      });
-      return { ok: true };
+        if (token) {
+          await fetch(`${API_URL}/api/cart`, {
+            method: "POST",
+            headers: authHeaders(token),
+            body: JSON.stringify({ productId: id, quantity: qty }),
+          });
+        }
+      },
+
+      removeFromCart: async (id) => {
+        const { token, cart } = get();
+        const pid = String(id);
+        const next = cart.filter((c) => c.id !== pid);
+        set({
+          cart: next,
+          cartCount: next.reduce((s, i) => s + i.quantity, 0),
+        });
+
+        if (token) {
+          await fetch(`${API_URL}/api/cart/${pid}`, {
+            method: "DELETE",
+            headers: authHeaders(token),
+          });
+        }
+      },
+
+      updateQuantity: async (id, quantity) => {
+        const { token, cart } = get();
+        const pid = String(id);
+        let next: CartItem[];
+        if (quantity <= 0) {
+          next = cart.filter((c) => c.id !== pid);
+        } else {
+          next = cart.map((c) =>
+            c.id === pid ? { ...c, quantity } : c
+          );
+        }
+        set({
+          cart: next,
+          cartCount: next.reduce((s, i) => s + i.quantity, 0),
+        });
+
+        if (token) {
+          await fetch(`${API_URL}/api/cart`, {
+            method: "PUT",
+            headers: authHeaders(token),
+            body: JSON.stringify({ productId: pid, quantity }),
+          });
+        }
+      },
+
+      clearCart: async () => {
+        const { token } = get();
+        set({ cart: [], cartCount: 0 });
+        if (token) {
+          await fetch(`${API_URL}/api/cart`, {
+            method: "DELETE",
+            headers: authHeaders(token),
+          });
+        }
+      },
+
+      syncCartFromServer: async () => {
+        const { token } = get();
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_URL}/api/cart`, {
+            headers: authHeaders(token),
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : [];
+          set({
+            cart: items,
+            cartCount: items.reduce(
+              (s: number, i: CartItem) => s + i.quantity,
+              0
+            ),
+          });
+        } catch {
+          // ignore
+        }
+      },
+
+      isInWishlist: (id) => {
+        const pid = String(id);
+        return get().wishlist.some((w) => w.id === pid);
+      },
+
+      addToWishlist: async (item) => {
+        const { token, wishlist } = get();
+        const id = String(item.id);
+        if (wishlist.some((w) => w.id === id)) return;
+        const next = [...wishlist, { ...item, id }];
+        set({ wishlist: next, wishlistCount: next.length });
+
+        if (token) {
+          await fetch(`${API_URL}/api/wishlist`, {
+            method: "POST",
+            headers: authHeaders(token),
+            body: JSON.stringify({ productId: id }),
+          });
+        }
+      },
+
+      removeFromWishlist: async (id) => {
+        const { token, wishlist } = get();
+        const pid = String(id);
+        const next = wishlist.filter((w) => w.id !== pid);
+        set({ wishlist: next, wishlistCount: next.length });
+
+        if (token) {
+          await fetch(`${API_URL}/api/wishlist/${pid}`, {
+            method: "DELETE",
+            headers: authHeaders(token),
+          });
+        }
+      },
+
+      syncWishlistFromServer: async () => {
+        const { token } = get();
+        if (!token) return;
+        try {
+          const res = await fetch(`${API_URL}/api/wishlist`, {
+            headers: authHeaders(token),
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : [];
+          set({ wishlist: items, wishlistCount: items.length });
+        } catch {
+          // ignore
+        }
+      },
+    }),
+    {
+      name: "voltora-store",
+      partialize: (s) => ({
+        cart: s.cart,
+        wishlist: s.wishlist,
+        user: s.user,
+        token: s.token,
+        isLoggedIn: s.isLoggedIn,
+        cartCount: s.cartCount,
+        wishlistCount: s.wishlistCount,
+      }),
     }
-    return { ok: false, error: "Invalid email or password" };
-  };
-
-  const logout = () => setUser(null);
-
-  const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
-  const wishlistCount = wishlist.length;
-
-  return (
-    <StoreContext.Provider
-      value={{
-        cart,
-        wishlist,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        addToWishlist,
-        removeFromWishlist,
-        isInWishlist,
-        cartCount,
-        wishlistCount,
-        user,
-        login,
-        logout,
-        isLoggedIn: !!user,
-      }}
-    >
-      {children}
-    </StoreContext.Provider>
-  );
-}
-
-export function useStore() {
-  const ctx = useContext(StoreContext);
-  if (!ctx) throw new Error("useStore must be used inside StoreProvider");
-  return ctx;
-}
+  )
+);

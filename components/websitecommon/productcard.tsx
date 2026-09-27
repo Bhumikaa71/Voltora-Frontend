@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import { useStore } from "@/lib/store";
 
@@ -36,10 +37,17 @@ const ProductCard = ({
   layout = "grid",
   features = [],
 }: ProductCardProps) => {
-  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } =
-    useStore();
+  const router = useRouter();
+  const {
+    addToCart,
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist,
+    isLoggedIn,
+  } = useStore();
 
-  const wishlisted = isInWishlist(id);
+  const pid = String(id);
+  const wishlisted = isInWishlist(pid);
 
   const discount =
     oldPrice && oldPrice > price
@@ -49,25 +57,41 @@ const ProductCard = ({
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
     if (wishlisted) {
-      removeFromWishlist(id);
+      removeFromWishlist(pid);
     } else {
-      addToWishlist({ id, title, price, oldPrice, rating, reviews, image, stock });
+      addToWishlist({
+        id: pid,
+        title,
+        price,
+        oldPrice,
+        rating,
+        reviews,
+        image,
+        stock,
+      });
     }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({ id, title, price, oldPrice, image, stock });
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+    addToCart({ id: pid, title, price, oldPrice, image, stock });
   };
 
-  // ===================== LIST LAYOUT =====================
   if (layout === "list") {
     return (
       <div className="group flex flex-col sm:flex-row bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
         <Link
-          href={`/products/${id}`}
+          href={`/products/${pid}`}
           className="relative w-full sm:w-[200px] h-[180px] sm:h-auto flex-shrink-0 bg-[#F7F8FA]"
         >
           <Image
@@ -76,17 +100,17 @@ const ProductCard = ({
             fill
             className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
             sizes="200px"
+            unoptimized
           />
         </Link>
 
         <div className="flex-1 min-w-0 p-4 sm:p-5 flex flex-col justify-between">
           <div>
-            <Link href={`/products/${id}`}>
+            <Link href={`/products/${pid}`}>
               <h3 className="text-[15px] sm:text-[16px] font-semibold text-[#0B1D36] leading-snug line-clamp-2 hover:text-[#00A8E8] transition-colors">
                 {title}
               </h3>
             </Link>
-
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
               <div className="flex items-center gap-1">
                 <div className="flex items-center gap-[1px]">
@@ -121,7 +145,6 @@ const ProductCard = ({
                 {stock}
               </span>
             </div>
-
             {features.length > 0 ? (
               <ul className="mt-3 space-y-1">
                 {features.slice(0, 4).map((feat, i) => (
@@ -167,7 +190,6 @@ const ProductCard = ({
               </>
             )}
           </div>
-
           <div className="flex items-center gap-2">
             <button
               onClick={handleWishlist}
@@ -192,11 +214,10 @@ const ProductCard = ({
     );
   }
 
-  // ===================== GRID LAYOUT =====================
   return (
     <div className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] hover:border-gray-200">
       <div className="relative bg-[#F7F8FA] pt-10 pb-8 px-6">
-        <Link href={`/products/${id}`} className="block">
+        <Link href={`/products/${pid}`} className="block">
           <div className="relative mx-auto w-full max-w-[180px] aspect-square">
             <Image
               src={image}
@@ -204,10 +225,10 @@ const ProductCard = ({
               fill
               className="object-contain transition-transform duration-500 ease-out group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 25vw"
+              unoptimized
             />
           </div>
         </Link>
-
         <button
           onClick={handleWishlist}
           aria-label="Add to wishlist"
@@ -248,7 +269,7 @@ const ProductCard = ({
           </span>
         </div>
 
-        <Link href={`/products/${id}`}>
+        <Link href={`/products/${pid}`}>
           <h3 className="text-[15px] font-semibold text-[#0B1D36] leading-[1.4] line-clamp-2 min-h-[42px] mb-3 hover:text-[#00A8E8] transition-colors">
             {title}
           </h3>

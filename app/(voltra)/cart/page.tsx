@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronRight,
   Minus,
@@ -12,11 +13,32 @@ import {
   Tag,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, cartCount } = useStore();
+  const router = useRouter();
+  const {
+    cart,
+    removeFromCart,
+    updateQuantity,
+    cartCount,
+    token,
+    user,
+    clearCart,
+    isLoggedIn,
+  } = useStore();
+
   const [coupon, setCoupon] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "ESEWA">("COD");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push("/login");
+    }
+  }, [isLoggedIn, router]);
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -24,6 +46,63 @@ export default function CartPage() {
   );
   const shipping = subtotal > 199 ? 0 : 9.99;
   const total = subtotal + shipping;
+
+  const handleCheckout = async () => {
+    if (!token || !isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/orders`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          shippingAddress: {
+            name: user?.name || "",
+            phone: user?.phone || "",
+            street: user?.address?.street || "",
+            city: user?.address?.city || "",
+            state: user?.address?.state || "",
+            zip: user?.address?.zip || "",
+            country: user?.address?.country || "",
+          },
+          paymentMethod,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Checkout failed");
+      }
+
+      const order = await res.json();
+
+      if (paymentMethod === "ESEWA") {
+        // Order saved; integrate real eSewa form when you have merchant keys
+        alert(
+          `Order #${order._id?.slice(-8)} created. Complete eSewa payment (add merchant keys next).`
+        );
+        await clearCart();
+        router.push("/account");
+        return;
+      }
+
+      await clearCart();
+      alert("Order placed successfully (Cash on Delivery)!");
+      router.push("/account");
+    } catch (err: any) {
+      alert(err.message || "Checkout failed");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  if (!isLoggedIn) return null;
 
   if (cart.length === 0) {
     return (
@@ -87,30 +166,28 @@ export default function CartPage() {
                     alt={item.title}
                     fill
                     className="object-contain p-2"
+                    unoptimized
                   />
                 </Link>
-
                 <div className="flex-1 min-w-0 flex flex-col">
                   <div className="flex items-start justify-between gap-2">
                     <Link href={`/products/${item.id}`}>
-                      <h3 className="text-[14px] sm:text-[15px] font-semibold text-[#0B1D36] line-clamp-2 hover:text-[#00A8E8] transition-colors">
+                      <h3 className="text-[14px] sm:text-[15px] font-semibold text-[#0B1D36] line-clamp-2 hover:text-[#00A8E8]">
                         {item.title}
                       </h3>
                     </Link>
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="p-1.5 text-gray-300 hover:text-[#E5484D] transition-colors shrink-0"
+                      className="p-1.5 text-gray-300 hover:text-[#E5484D]"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
-
                   {item.stock && (
                     <p className="text-xs text-emerald-600 font-medium mt-1">
                       {item.stock}
                     </p>
                   )}
-
                   <div className="mt-auto flex items-center justify-between pt-3">
                     <div className="flex items-center border border-gray-200 rounded-full overflow-hidden">
                       <button
@@ -133,16 +210,10 @@ export default function CartPage() {
                         <Plus size={14} />
                       </button>
                     </div>
-
                     <div className="text-right">
                       <p className="text-[15px] font-bold text-[#0B1D36]">
                         ${(item.price * item.quantity).toFixed(2)}
                       </p>
-                      {item.oldPrice && (
-                        <p className="text-xs text-gray-400 line-through">
-                          ${(item.oldPrice * item.quantity).toFixed(2)}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -150,7 +221,6 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl border border-gray-100 p-6 sticky top-28">
               <h2 className="text-lg font-bold text-[#0B1D36] mb-5">
@@ -174,11 +244,36 @@ export default function CartPage() {
                     )}
                   </span>
                 </div>
-                {shipping > 0 && (
-                  <p className="text-[11px] text-gray-400">
-                    Free shipping on orders over $199
-                  </p>
-                )}
+              </div>
+
+              <div className="mb-5">
+                <p className="text-sm font-semibold text-[#0B1D36] mb-2">
+                  Payment method
+                </p>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer has-[:checked]:border-[#00A8E8] has-[:checked]:bg-[#F0F9FF]">
+                    <input
+                      type="radio"
+                      name="pay"
+                      checked={paymentMethod === "COD"}
+                      onChange={() => setPaymentMethod("COD")}
+                    />
+                    <span className="text-sm font-medium text-slate-700">
+                      Cash on Delivery (COD)
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer has-[:checked]:border-[#00A8E8] has-[:checked]:bg-[#F0F9FF]">
+                    <input
+                      type="radio"
+                      name="pay"
+                      checked={paymentMethod === "ESEWA"}
+                      onChange={() => setPaymentMethod("ESEWA")}
+                    />
+                    <span className="text-sm font-medium text-slate-700">
+                      eSewa
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <div className="flex gap-2 mb-5">
@@ -192,10 +287,13 @@ export default function CartPage() {
                     placeholder="Coupon code"
                     value={coupon}
                     onChange={(e) => setCoupon(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00A8E8]/30 text-[#0B1D36]"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm bg-gray-50 border-0 rounded-xl focus:outline-none text-[#0B1D36]"
                   />
                 </div>
-                <button className="px-4 py-2.5 text-sm font-semibold text-[#0B1D36] bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                <button
+                  type="button"
+                  className="px-4 py-2.5 text-sm font-semibold text-[#0B1D36] bg-gray-100 rounded-xl"
+                >
                   Apply
                 </button>
               </div>
@@ -209,9 +307,14 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <button className="w-full h-12 bg-[#0B1D36] hover:bg-[#00A8E8] text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2">
-                Proceed to Checkout
-                <ArrowRight size={16} />
+              <button
+                type="button"
+                onClick={handleCheckout}
+                disabled={checkoutLoading}
+                className="w-full h-12 bg-[#0B1D36] hover:bg-[#00A8E8] text-white font-semibold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {checkoutLoading ? "Placing order..." : "Proceed to Checkout"}
+                {!checkoutLoading && <ArrowRight size={16} />}
               </button>
 
               <Link
