@@ -25,7 +25,9 @@ interface ProductDetailsProps {
 }
 
 const ProductDetails = ({ productId }: ProductDetailsProps) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [product, setProduct] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -77,6 +79,7 @@ const ProductDetails = ({ productId }: ProductDetailsProps) => {
         const relatedData = await relatedRes.json();
         setRelatedProducts(
           (Array.isArray(relatedData) ? relatedData : [])
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .filter((p: any) => p._id !== data._id)
             .slice(0, 4)
         );

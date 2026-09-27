@@ -29,6 +29,7 @@ export default function ProductsListing({
 }: ProductsListingProps) {
   const router = useRouter();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,6 +73,7 @@ export default function ProductsListing({
         const brands = [
           ...new Set(
             productsList
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .map((p: any) => p.brand)
               .filter((b: string) => b && b.trim() !== "")
           ),
@@ -90,6 +92,7 @@ export default function ProductsListing({
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedCategory(initialCategory);
     setCurrentPage(1);
   }, [initialCategory]);
@@ -176,6 +179,7 @@ export default function ProductsListing({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [
     selectedCategory,

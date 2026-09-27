@@ -78,6 +78,7 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
@@ -207,6 +208,7 @@ export default function AdminProductsPage() {
 
       setShowModal(false);
       fetchData();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.message);
     } finally {

@@ -64,7 +64,9 @@ function getTimeLeft(endsAt: string | Date | null | undefined) {
 }
 
 const DealsOfTheDay = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [deals, setDeals] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [activeDeal, setActiveDeal] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);

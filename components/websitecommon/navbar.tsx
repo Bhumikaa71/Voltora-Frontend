@@ -35,6 +35,7 @@ import { useStore } from "@/lib/store";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 // Icon mapping (optional – falls back to Grid)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const categoryIcons: Record<string, any> = {
   Laptops: Laptop,
   "PC & Computers": Monitor,

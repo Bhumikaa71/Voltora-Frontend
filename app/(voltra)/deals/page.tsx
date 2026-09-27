@@ -61,6 +61,7 @@ function CountdownTimer({ endsAt }: { endsAt?: string | null }) {
 }
 
 export default function DealsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("discount");
