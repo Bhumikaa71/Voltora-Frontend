@@ -1,16 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronRight,
   User,
   Package,
   MapPin,
   LogOut,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 
@@ -18,12 +18,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function AccountPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, token, isLoggedIn, setUser, logout } = useStore();
+
   const [tab, setTab] = useState<"profile" | "orders">("profile");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [message, setMessage] = useState("");
+
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -53,16 +58,27 @@ export default function AccountPage() {
   }, [isLoggedIn, user, router]);
 
   useEffect(() => {
+    if (searchParams.get("tab") === "orders") setTab("orders");
+  }, [searchParams]);
+
+  useEffect(() => {
     if (tab !== "orders" || !token) return;
+
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_URL}/api/orders`, {
+        const res = await fetch(`${API_URL}/api/orders/my`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (!res.ok) {
+          console.error("Orders error", await res.text());
+          setOrders([]);
+          return;
+        }
         const data = await res.json();
         setOrders(Array.isArray(data) ? data : []);
-      } catch {
+      } catch (e) {
+        console.error(e);
         setOrders([]);
       } finally {
         setLoading(false);
@@ -75,32 +91,39 @@ export default function AccountPage() {
     e.preventDefault();
     if (!token) return;
     setSaving(true);
+    setMessage("");
     try {
+      const body: any = {
+        name: form.name,
+        phone: form.phone,
+        address: {
+          street: form.street,
+          city: form.city,
+          state: form.state,
+          zip: form.zip,
+          country: form.country,
+        },
+      };
+      if (newPassword.length >= 6) body.password = newPassword;
+
       const res = await fetch(`${API_URL}/api/auth/profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: form.name,
-          phone: form.phone,
-          address: {
-            street: form.street,
-            city: form.city,
-            state: form.state,
-            zip: form.zip,
-            country: form.country,
-          },
-        }),
+        body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error("Failed to update");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Update failed");
+      }
       const data = await res.json();
       setUser(data);
-      alert("Profile updated");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setNewPassword("");
+      setMessage("Profile updated successfully");
     } catch (err: any) {
-      alert(err.message);
+      setMessage(err.message || "Failed to update");
     } finally {
       setSaving(false);
     }
@@ -169,6 +192,13 @@ export default function AccountPage() {
                 <h2 className="text-lg font-bold text-[#0B1D36] flex items-center gap-2">
                   <MapPin size={18} /> Profile & Address
                 </h2>
+
+                {message && (
+                  <p className="text-sm text-[#00A8E8] bg-[#F0F9FF] px-3 py-2 rounded-xl">
+                    {message}
+                  </p>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -184,17 +214,43 @@ export default function AccountPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Phone
+                      Contact number
                     </label>
                     <input
+                      type="tel"
                       value={form.phone}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, phone: e.target.value }))
                       }
+                      placeholder="98xxxxxxxx"
                       className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    New password (optional)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Leave blank to keep current"
+                      minLength={6}
+                      className="w-full px-4 py-2.5 pr-11 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Street
@@ -207,6 +263,7 @@ export default function AccountPage() {
                     className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-[#00A8E8] text-slate-700"
                   />
                 </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {(["city", "state", "zip", "country"] as const).map((key) => (
                     <div key={key}>
@@ -223,6 +280,7 @@ export default function AccountPage() {
                     </div>
                   ))}
                 </div>
+
                 <button
                   type="submit"
                   disabled={saving}
@@ -242,7 +300,9 @@ export default function AccountPage() {
                 ) : orders.length === 0 ? (
                   <div className="bg-white rounded-2xl border border-gray-100 py-16 text-center">
                     <Package size={32} className="mx-auto text-gray-300 mb-3" />
-                    <p className="text-[#0B1D36] font-semibold">No orders yet</p>
+                    <p className="text-[#0B1D36] font-semibold">
+                      No orders yet
+                    </p>
                     <Link
                       href="/products"
                       className="text-sm text-[#00A8E8] font-medium mt-2 inline-block"
@@ -265,9 +325,14 @@ export default function AccountPage() {
                             {new Date(order.createdAt).toLocaleString()}
                           </p>
                         </div>
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">
-                          {order.status}
-                        </span>
+                        <div className="flex gap-2">
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">
+                            {order.status}
+                          </span>
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                            {order.paymentMethod} · {order.paymentStatus}
+                          </span>
+                        </div>
                       </div>
                       <div className="space-y-2 mb-3">
                         {order.items?.map((item: any, i: number) => (
@@ -287,7 +352,7 @@ export default function AccountPage() {
                       <div className="border-t border-gray-100 pt-3 flex justify-between">
                         <span className="text-sm text-gray-500">Total</span>
                         <span className="font-bold text-[#0B1D36]">
-                          ${order.total?.toFixed(2)}
+                          ${Number(order.total).toFixed(2)}
                         </span>
                       </div>
                     </div>
