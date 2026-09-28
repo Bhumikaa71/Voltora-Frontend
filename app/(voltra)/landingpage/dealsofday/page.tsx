@@ -34,7 +34,7 @@ function RatingStars({ rating }: { rating: number }) {
 
 function TimeUnit({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center min-w-[52px] h-[52px] rounded-2xl bg-gradient-to-b from-[#0B1D36] to-[#132B4A] text-white shadow-lg shadow-[#0B1D36]/20">
+    <div className="flex flex-col items-center justify-center min-w-13 h-13 rounded-2xl bg-linear-to-b from-[#0B1D36] to-[#132B4A] text-white shadow-lg shadow-[#0B1D36]/20">
       <span className="text-lg font-bold leading-none tabular-nums tracking-tight">
         {String(value).padStart(2, "0")}
       </span>
