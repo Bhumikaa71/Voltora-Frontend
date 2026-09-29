@@ -27,7 +27,7 @@ const Footer = () => {
   return (
     <footer className="bg-[#0B1D36] text-white relative overflow-hidden">
       {/* Subtle top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00A8E8]/40 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-[#00A8E8]/40 to-transparent" />
 
       {/* Main Footer Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 pt-14 pb-10">

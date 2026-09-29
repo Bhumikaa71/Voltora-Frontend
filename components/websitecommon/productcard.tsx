@@ -92,7 +92,7 @@ const ProductCard = ({
       <div className="group flex flex-col sm:flex-row bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
         <Link
           href={`/products/${pid}`}
-          className="relative w-full sm:w-[200px] h-[180px] sm:h-auto flex-shrink-0 bg-[#F7F8FA]"
+          className="relative w-full sm:w-50 h-45 sm:h-auto shrink-0 bg-[#F7F8FA]"
         >
           <Image
             src={image}
